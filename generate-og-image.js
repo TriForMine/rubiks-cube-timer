@@ -210,9 +210,9 @@ function generateOGImageSVG() {
     </text>
 
     <!-- Offline badge -->
-    <rect x="300" y="0" width="140" height="40" rx="20" fill="rgba(59, 130, 246, 0.2)"
+    <rect x="300" y="0" width="180" height="40" rx="20" fill="rgba(59, 130, 246, 0.2)"
           stroke="rgba(59, 130, 246, 0.3)" stroke-width="1"/>
-    <text x="370" y="26" font-family="system-ui, -apple-system, sans-serif"
+    <text x="390" y="26" font-family="system-ui, -apple-system, sans-serif"
           font-size="16" font-weight="500" fill="#93c5fd" text-anchor="middle">
       Offline Support
     </text>

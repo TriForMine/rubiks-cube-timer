@@ -26,7 +26,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { StatCard } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Wifi, WifiOff } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 import Link from "next/link";
 
 interface AppLayoutProps {
@@ -273,7 +273,7 @@ function SidebarContent({
                 {sessionStats.bestTime && (
                   <StatCard
                     title="Best Time"
-                    value={`${(sessionStats.bestTime / 1000).toFixed(2)}s`}
+                    value={formatTime(sessionStats.bestTime)}
                     icon={<Trophy className="w-4 h-4" />}
                     trend="up"
                     className="border-green-200/50 dark:border-green-800/50"
@@ -283,7 +283,7 @@ function SidebarContent({
                 {sessionStats.avgTime && (
                   <StatCard
                     title="Average"
-                    value={`${(sessionStats.avgTime / 1000).toFixed(2)}s`}
+                    value={formatTime(sessionStats.avgTime)}
                     icon={<TrendingUp className="w-4 h-4" />}
                     className="border-purple-200/50 dark:border-purple-800/50"
                   />
@@ -300,7 +300,7 @@ function SidebarContent({
           <div className="flex items-center justify-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <p className="text-xs font-semibold text-foreground">
-              CubeTimer v1.0
+              CubeTimer v0.1.0
             </p>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -449,7 +449,7 @@ export function AppLayout({
                             Best:
                           </span>
                           <span className="font-mono font-bold text-green-600 dark:text-green-400">
-                            {(sessionStats.bestTime / 1000).toFixed(2)}s
+                            {formatTime(sessionStats.bestTime)}
                           </span>
                         </div>
                       )}

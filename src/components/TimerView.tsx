@@ -6,7 +6,7 @@ import { ScrambleDisplay } from "@/components/ScrambleDisplay";
 import { generateScramble } from "@/lib/scramble";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Square, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 
 export interface TimeRecord {
   id: string;
@@ -201,25 +201,25 @@ export function TimerView({
 
   const getMotivationalMessage = () => {
     if (lastSolveTime) {
-      const seconds = (lastSolveTime / 1000).toFixed(2);
+      const formattedTime = formatTime(lastSolveTime);
 
       if (wasLastSolvePB) {
         if (lastSolveTime < 10000)
-          return `NEW PB! ${seconds}s - Incredible! 🏆⚡`;
+          return `NEW PB! ${formattedTime} - Incredible! 🏆⚡`;
         if (lastSolveTime < 20000)
-          return `NEW PB! ${seconds}s - Outstanding! 🏆💪`;
+          return `NEW PB! ${formattedTime} - Outstanding! 🏆💪`;
         if (lastSolveTime < 30000)
-          return `NEW PB! ${seconds}s - Well done! 🏆📈`;
-        return `NEW PB! ${seconds}s - Great achievement! 🏆🎯`;
+          return `NEW PB! ${formattedTime} - Well done! 🏆📈`;
+        return `NEW PB! ${formattedTime} - Great achievement! 🏆🎯`;
       }
 
       if (lastSolveTime < 10000)
-        return `Amazing! ${seconds}s - You're on fire! 🔥`;
+        return `Amazing! ${formattedTime} - You're on fire! 🔥`;
       if (lastSolveTime < 20000)
-        return `Great solve! ${seconds}s - Keep it up! 💪`;
+        return `Great solve! ${formattedTime} - Keep it up! 💪`;
       if (lastSolveTime < 30000)
-        return `Nice work! ${seconds}s - Getting better! 📈`;
-      return `${seconds}s completed - Every solve counts! 🎯`;
+        return `Nice work! ${formattedTime} - Getting better! 📈`;
+      return `${formattedTime} completed - Every solve counts! 🎯`;
     }
     return null;
   };

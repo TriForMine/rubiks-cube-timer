@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatTime } from "@/lib/utils";
-import { TimeRecord } from "@/app/page";
+import type { TimeRecord } from "@/app/page";
 import { TrendingUp, Clock, Target, BarChart3, Activity } from "lucide-react";
 
 interface ChartsProps {

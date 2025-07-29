@@ -439,7 +439,7 @@ export function Settings({
                 <Info className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <h3 className="font-bold text-lg">CubeTimer v1.0</h3>
+                <h3 className="font-bold text-lg">CubeTimer v0.1.0</h3>
                 <p className="text-sm text-muted-foreground">
                   Professional speedcubing timer built with Next.js & React
                 </p>

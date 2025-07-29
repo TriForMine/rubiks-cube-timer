@@ -18,7 +18,7 @@ A modern, feature-rich Rubik's cube timer built with Next.js, React, and TypeScr
 
 ### 🎨 User Experience
 - **Modern Dark Theme**: Easy on the eyes for long practice sessions
-- **Responsive Design**: Works perfectly on desktop, tablet, and mobile
+- **Desktop Focused**: Optimized for desktop use with keyboard controls
 - **Visual State Indicators**: Clear feedback for timer states (ready, running, stopped)
 - **Keyboard Shortcuts**: Efficient navigation and control
 
@@ -37,8 +37,8 @@ A modern, feature-rich Rubik's cube timer built with Next.js, React, and TypeScr
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd RubiksCubeTimer
+   git clone https://github.com/TriForMine/rubiks-cube-timer.git
+   cd rubiks-cube-timer
    ```
 
 2. **Install dependencies**
@@ -86,6 +86,8 @@ bun run start
 | `SPACE` | Start/Stop timer |
 | `ESC` | Generate new scramble |
 | `DELETE` | Delete last time |
+
+**Note**: The timer currently requires a physical keyboard and is optimized for desktop use. Mobile device support is planned for future releases.
 
 ### Managing Times
 
@@ -179,19 +181,28 @@ Times are stored in JSON format with the following structure:
 
 ## Contributing
 
-1. Fork the repository
+We welcome contributions from developers of all skill levels! Please see our [Contributing Guidelines](CONTRIBUTING.md) for detailed information on how to get started.
+
+### Quick Start for Contributors
+
+1. Fork the repository on GitHub
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Make your changes following our coding standards
+4. Test your changes thoroughly
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ### Development Guidelines
 
-- Follow TypeScript best practices
+- Follow TypeScript and React best practices
 - Use ESLint and Prettier for code formatting
 - Write meaningful commit messages
 - Test on multiple devices and browsers
 - Maintain accessibility standards
+- Read our [Code of Conduct](CODE_OF_CONDUCT.md)
+
+For detailed contribution guidelines, development setup, and coding standards, please refer to [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Performance Optimizations
 
@@ -211,36 +222,64 @@ Times are stored in JSON format with the following structure:
 
 ## Browser Support
 
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
+- Chrome 90+ (desktop)
+- Firefox 88+ (desktop)
+- Safari 14+ (desktop)
+- Edge 90+ (desktop)
+
+**Note**: Requires physical keyboard for timer controls. Mobile browsers are not currently supported.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+### Apache 2.0 License Summary
+
+- ✅ Commercial use allowed
+- ✅ Modification allowed  
+- ✅ Distribution allowed
+- ✅ Patent use allowed
+- ✅ Private use allowed
+- ℹ️ License and copyright notice required
+- ℹ️ State changes required
+
+For the full license text, see [LICENSE](LICENSE).
 
 ## Acknowledgments
 
-- Inspired by [cstimer](https://cstimer.net/)
-- WCA scramble algorithms
-- The speedcubing community
-- Contributors and testers
+- Inspired by [cstimer](https://cstimer.net/) - the gold standard for online cube timers
+- [World Cube Association (WCA)](https://www.worldcubeassociation.org/) for scramble algorithms and regulations
+- The global speedcubing community for feedback and support
+- All contributors who help make this project better
+- Open source libraries and tools that make this project possible
+
+## Security
+
+If you discover a security vulnerability, please follow our [Security Policy](SECURITY.md) for responsible disclosure. Do not report security issues through public GitHub issues.
 
 ## Roadmap
 
 ### Planned Features
 
+#### High Priority
+- [ ] Mobile touch controls and responsive interface
+- [ ] Internationalization (i18n) and multiple language support
 - [ ] Multiple puzzle support (2x2, 4x4, etc.)
 - [ ] Advanced statistics and graphs
 - [ ] Competition mode with inspection time
+
+#### Medium Priority
 - [ ] Cloud synchronization
-- [ ] Mobile app (React Native)
-- [ ] Multiplayer racing
 - [ ] Custom themes
 - [ ] Session management
 - [ ] Training modes (F2L, OLL, PLL)
 - [ ] Sound effects and notifications
+
+#### Future Considerations
+- [ ] Mobile app (React Native)
+- [ ] Multiplayer racing
+- [ ] Advanced scramble algorithms
+- [ ] Competition timing features
 
 ### Bug Reports
 
@@ -263,11 +302,17 @@ A: Yes, the scrambles follow WCA regulations for 3x3x3 cubes with proper move no
 **Q: Can I use this offline?**
 A: Yes, the app works offline after the initial load thanks to Next.js static optimization.
 
+**Q: Does this work on mobile devices?**
+A: Currently, the timer requires a physical keyboard for proper operation and is optimized for desktop use. Mobile support is planned for future releases.
+
 **Q: How do I backup my times?**
 A: Use the Export function in Settings to download a JSON file with all your data.
 
 **Q: Is my data private?**
-A: Yes, all data is stored locally in your browser. Nothing is sent to external servers.
+A: Yes, all data is stored locally in your browser. Nothing is sent to external servers. See our [Security Policy](SECURITY.md) for more details.
+
+**Q: Can I contribute to this project?**
+A: Absolutely! We welcome contributions. Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) to get started.
 
 ---
 

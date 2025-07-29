@@ -1,7 +1,10 @@
 {
   "name": "rubiks-cube-timer",
   "version": "0.1.0",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TriForMine/rubiks-cube-timer.git"
+  },
   "scripts": {
     "dev": "bun run next dev --turbopack",
     "dev:webpack": "bun run next dev",

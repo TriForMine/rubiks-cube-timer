@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Eye, Copy, RefreshCw, Shuffle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CubeVisualization } from "@/components/CubeVisualization";
+import { applyScramble } from "@/lib/cube-simulation";
 
 interface ScrambleDialogProps {
   scramble: string;
@@ -38,6 +40,12 @@ export function ScrambleDialog({
 
   const scrambleMoves = scramble.split(" ");
 
+  // Calculate the cube state after applying the scramble
+  const scrambledCubeState = useMemo(() => {
+    console.log("Scramble:", scramble);
+    return applyScramble(scramble);
+  }, [scramble]);
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -58,53 +66,24 @@ export function ScrambleDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Cube Visualization */}
+          {/* Cube State Preview */}
           <div className="flex justify-center">
-            <div className="w-80 h-80 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center relative overflow-hidden">
-              <div className="text-center space-y-4 z-10">
-                <div className="relative mx-auto">
-                  <svg
-                    width="120"
-                    height="120"
-                    viewBox="0 0 120 120"
-                    className="text-primary drop-shadow-lg"
-                    aria-label="3D cube representation"
-                  >
-                    <title>3D Cube Visualization</title>
-                    {/* Cube faces with different colors for 3D effect */}
-                    <polygon
-                      points="20,40 60,20 100,40 60,60"
-                      fill="hsl(var(--primary))"
-                      opacity="0.9"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="1"
-                    />
-                    <polygon
-                      points="20,40 60,60 60,100 20,80"
-                      fill="hsl(var(--primary))"
-                      opacity="0.7"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="1"
-                    />
-                    <polygon
-                      points="60,60 100,40 100,80 60,100"
-                      fill="hsl(var(--primary))"
-                      opacity="0.5"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="1"
-                    />
-                  </svg>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-lg font-semibold">Scrambled Cube</p>
-                  <p className="text-sm text-muted-foreground">
-                    {scrambleMoves.length} moves applied
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Cube is ready to solve
-                  </p>
-                </div>
-              </div>
+            <CubeVisualization cubeState={scrambledCubeState} />
+          </div>
+
+          {/* Verification Instructions */}
+          <div className="bg-amber-50 dark:bg-amber-900 rounded-lg p-4 border border-amber-200 dark:border-amber-700">
+            <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-2 flex items-center">
+              <Eye className="w-4 h-4 mr-2" />
+              Scramble Verification
+            </h4>
+            <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">
+              After applying the scramble, your cube should match the pattern
+              above. Use this to verify you've executed the scramble correctly.
+            </p>
+            <div className="text-xs text-amber-700 dark:text-amber-300">
+              <strong>Tip:</strong> Compare the colors on each visible face with
+              your physical cube to confirm accuracy.
             </div>
           </div>
 
@@ -250,6 +229,93 @@ export function ScrambleDialog({
             </Button>
           </div>
 
+          {/* Face Impact Analysis */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold">Face Impact Analysis</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border">
+                <h4 className="font-medium text-sm mb-2">
+                  Most Affected Faces
+                </h4>
+                <div className="space-y-1 text-xs">
+                  {Object.entries({
+                    "Right (R)": scrambleMoves.filter((move) =>
+                      move.startsWith("R"),
+                    ).length,
+                    "Up (U)": scrambleMoves.filter((move) =>
+                      move.startsWith("U"),
+                    ).length,
+                    "Front (F)": scrambleMoves.filter((move) =>
+                      move.startsWith("F"),
+                    ).length,
+                    "Left (L)": scrambleMoves.filter((move) =>
+                      move.startsWith("L"),
+                    ).length,
+                    "Down (D)": scrambleMoves.filter((move) =>
+                      move.startsWith("D"),
+                    ).length,
+                    "Back (B)": scrambleMoves.filter((move) =>
+                      move.startsWith("B"),
+                    ).length,
+                  })
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 3)
+                    .map(([face, count]) => (
+                      <div key={face} className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {face}:
+                        </span>
+                        <span className="font-mono font-bold">
+                          {count} moves
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border">
+                <h4 className="font-medium text-sm mb-2">
+                  Scramble Complexity
+                </h4>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Difficulty:
+                    </span>
+                    <span className="font-bold text-primary">
+                      {scrambleMoves.length >= 20
+                        ? "Competition"
+                        : scrambleMoves.length >= 15
+                          ? "Intermediate"
+                          : "Beginner"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Pattern:
+                    </span>
+                    <span className="font-mono text-xs">
+                      {scrambleMoves.filter(
+                        (move) => !move.includes("'") && !move.includes("2"),
+                      ).length >
+                      scrambleMoves.length / 2
+                        ? "Clockwise"
+                        : "Mixed"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Est. Time:
+                    </span>
+                    <span className="font-mono text-xs">
+                      {Math.ceil(scrambleMoves.length * 1.5)}s
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Educational Info */}
           <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
             <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
@@ -269,6 +335,10 @@ export function ScrambleDialog({
               <li>
                 • Take your time with the scramble - accuracy is more important
                 than speed
+              </li>
+              <li>
+                • Compare your cube to the preview above after completing all
+                moves
               </li>
             </ul>
           </div>

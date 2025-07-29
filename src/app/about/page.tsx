@@ -141,7 +141,7 @@ export default function AboutPage() {
 
               <Button
                 variant="outline"
-                onClick={() => (window.location.href = "/")}
+                onClick={() => window.location.assign("/")}
               >
                 Back to Timer
               </Button>
@@ -287,7 +287,7 @@ export default function AboutPage() {
               <Button
                 size="lg"
                 className="min-w-[200px]"
-                onClick={() => (window.location.href = "/")}
+                onClick={() => window.location.assign("/")}
               >
                 <Clock className="w-5 h-5 mr-2" />
                 Start Timing
@@ -297,7 +297,7 @@ export default function AboutPage() {
                 variant="outline"
                 size="lg"
                 className="min-w-[200px]"
-                onClick={() => (window.location.href = "/#install")}
+                onClick={() => window.location.assign("/#install")}
               >
                 <Download className="w-5 h-5 mr-2" />
                 Install App

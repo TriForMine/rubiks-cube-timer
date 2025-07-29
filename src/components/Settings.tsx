@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Settings as SettingsIcon,
   Download,
@@ -45,6 +45,7 @@ export function Settings({
     useSettings();
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExportTimes = () => {
     const savedTimes = localStorage.getItem("rubiks-times");
@@ -54,33 +55,63 @@ export function Settings({
     }
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleImportTimes = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     setIsImporting(true);
     try {
       const importedTimes = await importTimes(file);
 
       const validTimes = (importedTimes as ImportedTimeData[])
-        .filter(
-          (time) =>
+        .filter((time) => {
+          return (
             time.id &&
             typeof time.time === "number" &&
             time.scramble &&
-            time.date,
-        )
-        .map((time) => ({
-          ...time,
-          date: new Date(time.date as string),
-        })) as TimeRecord[];
+            time.date
+          );
+        })
+        .map((time) => {
+          // Ensure date is properly converted to Date object
+          const dateValue = time.date;
+          let dateObj: Date;
+
+          if (dateValue instanceof Date) {
+            dateObj = dateValue;
+          } else if (
+            typeof dateValue === "string" ||
+            typeof dateValue === "number"
+          ) {
+            dateObj = new Date(dateValue);
+          } else {
+            // Fallback to current date if invalid
+            dateObj = new Date();
+          }
+
+          // Validate the date is not Invalid Date
+          if (isNaN(dateObj.getTime())) {
+            dateObj = new Date();
+          }
+
+          return {
+            ...time,
+            date: dateObj,
+          } as TimeRecord;
+        });
 
       if (validTimes.length > 0) {
         const existingTimes = JSON.parse(
           localStorage.getItem("rubiks-times") || "[]",
-        );
+        ).map((time: any) => ({
+          ...time,
+          date: new Date(time.date),
+        }));
         const allTimes = [...validTimes, ...existingTimes];
 
         const uniqueTimes = allTimes.filter(
@@ -317,15 +348,17 @@ export function Settings({
               Export Times
             </Button>
 
-            <div className="relative">
+            <div>
               <input
+                ref={fileInputRef}
                 type="file"
                 accept=".json"
                 onChange={handleImportTimes}
                 disabled={isImporting}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                className="hidden"
               />
               <Button
+                onClick={handleImportClick}
                 disabled={isImporting}
                 variant="secondary"
                 size="lg"

@@ -29,7 +29,8 @@ interface ChartsProps {
 
 export function Charts({ times }: ChartsProps) {
   const chartData = useMemo(() => {
-    if (times.length === 0) return { progression: [], distribution: [], ao5Data: [] };
+    if (times.length === 0)
+      return { progression: [], distribution: [], ao5Data: [] };
 
     // Filter out DNF times for charts
     const validTimes = times
@@ -45,14 +46,17 @@ export function Charts({ times }: ChartsProps) {
       solve: index + 1,
       time: time.effectiveTime / 1000,
       formattedTime: formatTime(time.effectiveTime),
-      date: time.date.toLocaleDateString(),
+      date: (time.date instanceof Date
+        ? time.date
+        : new Date(time.date)
+      ).toLocaleDateString(),
       scramble: time.scramble.substring(0, 20) + "...",
     }));
 
     // Ao5 progression
     const ao5Data = [];
     for (let i = 4; i < validTimes.length; i++) {
-      const last5 = validTimes.slice(i - 4, i + 1).map(t => t.effectiveTime);
+      const last5 = validTimes.slice(i - 4, i + 1).map((t) => t.effectiveTime);
       const sorted = [...last5].sort((a, b) => a - b);
       const ao5 = sorted.slice(1, -1).reduce((sum, time) => sum + time, 0) / 3;
 
@@ -64,8 +68,8 @@ export function Charts({ times }: ChartsProps) {
     }
 
     // Time distribution (histogram)
-    const minTime = Math.min(...validTimes.map(t => t.effectiveTime));
-    const maxTime = Math.max(...validTimes.map(t => t.effectiveTime));
+    const minTime = Math.min(...validTimes.map((t) => t.effectiveTime));
+    const maxTime = Math.max(...validTimes.map((t) => t.effectiveTime));
     const buckets = 10;
     const bucketSize = (maxTime - minTime) / buckets;
 
@@ -73,13 +77,13 @@ export function Charts({ times }: ChartsProps) {
       const bucketStart = minTime + i * bucketSize;
       const bucketEnd = bucketStart + bucketSize;
       const count = validTimes.filter(
-        t => t.effectiveTime >= bucketStart && t.effectiveTime < bucketEnd
+        (t) => t.effectiveTime >= bucketStart && t.effectiveTime < bucketEnd,
       ).length;
 
       return {
         range: `${(bucketStart / 1000).toFixed(1)}-${(bucketEnd / 1000).toFixed(1)}s`,
         count,
-        percentage: (count / validTimes.length * 100).toFixed(1),
+        percentage: ((count / validTimes.length) * 100).toFixed(1),
       };
     });
 
@@ -89,13 +93,14 @@ export function Charts({ times }: ChartsProps) {
   const stats = useMemo(() => {
     const validTimes = times
       .filter((time) => time.penalty !== "DNF")
-      .map((time) => time.penalty === "+2" ? time.time + 2000 : time.time);
+      .map((time) => (time.penalty === "+2" ? time.time + 2000 : time.time));
 
     if (validTimes.length === 0) return null;
 
     const best = Math.min(...validTimes);
     const worst = Math.max(...validTimes);
-    const mean = validTimes.reduce((sum, time) => sum + time, 0) / validTimes.length;
+    const mean =
+      validTimes.reduce((sum, time) => sum + time, 0) / validTimes.length;
     const median = validTimes.sort()[Math.floor(validTimes.length / 2)];
 
     return { best, worst, mean, median, count: validTimes.length };
@@ -119,7 +124,10 @@ export function Charts({ times }: ChartsProps) {
         <div className="bg-card border rounded-lg p-3 shadow-lg">
           <p className="font-medium">Solve #{label}</p>
           <p className="text-primary">
-            Time: <span className="font-mono">{payload[0].payload.formattedTime}</span>
+            Time:{" "}
+            <span className="font-mono">
+              {payload[0].payload.formattedTime}
+            </span>
           </p>
           {payload[0].payload.date && (
             <p className="text-muted-foreground text-sm">
@@ -138,7 +146,8 @@ export function Charts({ times }: ChartsProps) {
         <div className="bg-card border rounded-lg p-3 shadow-lg">
           <p className="font-medium">Solve #{label}</p>
           <p className="text-primary">
-            Ao5: <span className="font-mono">{payload[0].payload.formattedAo5}</span>
+            Ao5:{" "}
+            <span className="font-mono">{payload[0].payload.formattedAo5}</span>
           </p>
         </div>
       );
@@ -198,9 +207,7 @@ export function Charts({ times }: ChartsProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Solves</p>
-                  <p className="text-2xl font-bold font-mono">
-                    {stats.count}
-                  </p>
+                  <p className="text-2xl font-bold font-mono">{stats.count}</p>
                 </div>
                 <Clock className="w-8 h-8 text-muted-foreground opacity-20" />
               </div>
@@ -230,12 +237,29 @@ export function Charts({ times }: ChartsProps) {
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData.progression}>
                     <defs>
-                      <linearGradient id="timeGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      <linearGradient
+                        id="timeGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="hsl(var(--primary))"
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="hsl(var(--primary))"
+                          stopOpacity={0}
+                        />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="opacity-30"
+                    />
                     <XAxis
                       dataKey="solve"
                       className="text-xs"
@@ -273,7 +297,10 @@ export function Charts({ times }: ChartsProps) {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData.ao5Data}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="opacity-30"
+                    />
                     <XAxis
                       dataKey="solve"
                       className="text-xs"
@@ -290,7 +317,11 @@ export function Charts({ times }: ChartsProps) {
                       dataKey="ao5"
                       stroke="hsl(var(--chart-2))"
                       strokeWidth={3}
-                      dot={{ fill: "hsl(var(--chart-2))", strokeWidth: 2, r: 4 }}
+                      dot={{
+                        fill: "hsl(var(--chart-2))",
+                        strokeWidth: 2,
+                        r: 4,
+                      }}
                       activeDot={{ r: 6 }}
                     />
                   </LineChart>
@@ -312,7 +343,10 @@ export function Charts({ times }: ChartsProps) {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData.distribution}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="opacity-30"
+                    />
                     <XAxis
                       dataKey="range"
                       className="text-xs"

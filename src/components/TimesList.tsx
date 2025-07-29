@@ -329,10 +329,16 @@ export function TimesList({
                   {showDetails && (
                     <div className="text-right">
                       <div className="text-sm font-medium text-foreground">
-                        {time.date.toLocaleDateString()}
+                        {(time.date instanceof Date
+                          ? time.date
+                          : new Date(time.date)
+                        ).toLocaleDateString()}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {time.date.toLocaleTimeString()}
+                        {(time.date instanceof Date
+                          ? time.date
+                          : new Date(time.date)
+                        ).toLocaleTimeString()}
                       </div>
                     </div>
                   )}
@@ -380,10 +386,16 @@ export function TimesList({
                       </div>
                       <div className="bg-muted/30 p-3 rounded-lg">
                         <div className="text-sm font-medium">
-                          {time.date.toLocaleDateString()}
+                          {(time.date instanceof Date
+                            ? time.date
+                            : new Date(time.date)
+                          ).toLocaleDateString()}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {time.date.toLocaleTimeString()}
+                          {(time.date instanceof Date
+                            ? time.date
+                            : new Date(time.date)
+                          ).toLocaleTimeString()}
                         </div>
                       </div>
                     </div>

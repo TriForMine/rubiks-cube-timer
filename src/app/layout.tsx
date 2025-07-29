@@ -129,6 +129,7 @@ export const metadata: Metadata = {
     "msapplication-TileColor": "#3b82f6",
     "msapplication-config": "/browserconfig.xml",
     "theme-color": "#3b82f6",
+    "og:logo": "https://rubikscubetimer.triformine.dev/icons/icon-512x512.png",
   },
 };
 

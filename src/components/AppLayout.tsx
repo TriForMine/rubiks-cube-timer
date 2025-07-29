@@ -12,6 +12,7 @@ import {
   Shuffle,
   ChevronRight,
   Zap,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,7 @@ import { StatCard } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -74,6 +76,19 @@ const sidebarItems = [
     color: "text-orange-600 dark:text-orange-400",
     bgColor: "bg-orange-50 dark:bg-orange-950/50",
     hoverColor: "hover:bg-orange-100 dark:hover:bg-orange-900/50",
+  },
+];
+
+const externalLinks = [
+  {
+    id: "about",
+    label: "About",
+    icon: Info,
+    description: "Learn more",
+    href: "/about",
+    color: "text-indigo-600 dark:text-indigo-400",
+    bgColor: "bg-indigo-50 dark:bg-indigo-950/50",
+    hoverColor: "hover:bg-indigo-100 dark:hover:bg-indigo-900/50",
   },
 ];
 
@@ -187,6 +202,55 @@ function SidebarContent({
               );
             })}
           </nav>
+
+          {/* External Links */}
+          <div className="mt-6 space-y-2">
+            <div className="px-2 pb-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                More
+              </h3>
+            </div>
+            {externalLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.id}
+                  href={link.href}
+                  className={cn(
+                    "w-full group transition-all duration-200 cursor-pointer text-left block",
+                  )}
+                  onClick={onClose}
+                >
+                  <div
+                    className={cn(
+                      "flex items-center w-full p-4 rounded-xl transition-all duration-200",
+                      "hover:bg-accent/50 hover:scale-[1.02] active:scale-[0.98]",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 mr-3",
+                        `${link.bgColor} ${link.color} shadow-sm`,
+                      )}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
+
+                    <div className="flex-1 text-left">
+                      <div className="font-semibold text-sm text-foreground transition-colors">
+                        {link.label}
+                      </div>
+                      <div className="text-xs mt-0.5 text-muted-foreground transition-colors">
+                        {link.description}
+                      </div>
+                    </div>
+
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
 
           {/* Enhanced Session Stats */}
           {sessionStats && sessionStats.count > 0 && (

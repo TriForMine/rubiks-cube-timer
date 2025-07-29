@@ -1,6 +1,14 @@
 "use client";
 
-import { Clock, BarChart3, Zap, Shield, Download, Trophy } from "lucide-react";
+import {
+  Clock,
+  BarChart3,
+  Zap,
+  Shield,
+  Download,
+  Trophy,
+  Heart,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Head from "next/head";
@@ -294,6 +302,21 @@ export default function AboutPage() {
                 <Download className="w-5 h-5 mr-2" />
                 Install App
               </Button>
+
+              <Button
+                variant="gradient"
+                size="lg"
+                className="min-w-[200px]"
+                onClick={() =>
+                  window.open(
+                    "https://github.com/sponsors/TriForMine",
+                    "_blank",
+                  )
+                }
+              >
+                <Heart className="w-5 h-5 mr-2" />
+                Sponsor
+              </Button>
             </div>
           </div>
         </section>
@@ -317,6 +340,15 @@ export default function AboutPage() {
                     className="text-primary hover:underline font-medium"
                   >
                     TriForMine
+                  </a>
+                  {" · "}
+                  <a
+                    href="https://github.com/sponsors/TriForMine"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-pink-500 hover:underline font-medium"
+                  >
+                    💖 Sponsor
                   </a>
                 </span>
               </div>

@@ -108,10 +108,18 @@ export function Settings({
       if (validTimes.length > 0) {
         const existingTimes = JSON.parse(
           localStorage.getItem("rubiks-times") || "[]",
-        ).map((time: any) => ({
-          ...time,
-          date: new Date(time.date),
-        }));
+        ).map(
+          (time: {
+            id: string;
+            time: number;
+            scramble: string;
+            date: string | Date;
+            penalty?: string;
+          }) => ({
+            ...time,
+            date: new Date(time.date),
+          }),
+        );
         const allTimes = [...validTimes, ...existingTimes];
 
         const uniqueTimes = allTimes.filter(

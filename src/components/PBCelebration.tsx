@@ -257,7 +257,7 @@ export function PBCelebration({
             )}
             {getCelebrationLevel() === "massive" && (
               <p className="text-white/70 text-sm">
-                🔥 Incredible breakthrough! You're on fire!
+                🔥 Incredible breakthrough! You&apos;re on fire!
               </p>
             )}
             {getCelebrationLevel() === "huge" && (

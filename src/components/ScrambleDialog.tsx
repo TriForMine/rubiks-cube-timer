@@ -260,7 +260,7 @@ export function ScrambleDialog({
                 • Hold the cube with white face on top, green face facing you
               </li>
               <li>
-                • Execute moves exactly as written (R = clockwise, R' =
+                • Execute moves exactly as written (R = clockwise, R&apos; =
                 counterclockwise)
               </li>
               <li>

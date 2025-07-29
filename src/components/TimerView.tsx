@@ -225,9 +225,9 @@ export function TimerView({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col touch-pan-y">
       {/* Compact Scramble Section */}
-      <div className="flex-shrink-0 p-4">
+      <div className="flex-shrink-0 p-3 sm:p-4">
         <ScrambleDisplay
           scramble={currentScramble}
           onScrambleChange={onScrambleChange}
@@ -236,9 +236,9 @@ export function TimerView({
       </div>
 
       {/* Main Timer Section - Full height and centered */}
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-2 sm:p-4">
         <div className="w-full max-w-6xl">
-          <div className="text-center space-y-8">
+          <div className="text-center space-y-4 sm:space-y-6 md:space-y-8">
             {/* Huge Timer Display */}
             <Timer
               time={currentTime}
@@ -250,7 +250,7 @@ export function TimerView({
             {/* Status Message */}
             <div
               className={cn(
-                "text-xl md:text-2xl font-semibold transition-all duration-300 ease-out",
+                "text-lg sm:text-xl md:text-2xl font-semibold transition-all duration-300 ease-out touch-none px-4",
                 getStatusColor(),
                 isRunning && "animate-pulse",
               )}
@@ -262,7 +262,7 @@ export function TimerView({
             {getMotivationalMessage() && (
               <div
                 className={cn(
-                  "rounded-2xl p-4 border animate-fade-in max-w-md mx-auto",
+                  "rounded-xl sm:rounded-2xl p-3 sm:p-4 border animate-fade-in max-w-sm sm:max-w-md mx-auto",
                   wasLastSolvePB
                     ? "bg-gradient-to-r from-yellow-500/20 via-orange-500/10 to-yellow-500/20 border-yellow-500/30"
                     : "bg-gradient-to-r from-green-500/10 to-blue-500/10 border-green-500/20",
@@ -270,45 +270,54 @@ export function TimerView({
               >
                 <div
                   className={cn(
-                    "flex items-center justify-center gap-2 font-medium",
+                    "flex items-center justify-center gap-2 font-medium text-sm sm:text-base touch-none",
                     wasLastSolvePB
                       ? "text-yellow-600 dark:text-yellow-400"
                       : "text-green-600 dark:text-green-400",
                   )}
                 >
-                  <Sparkles className="w-4 h-4 animate-pulse" />
-                  {getMotivationalMessage()}
-                  <Sparkles className="w-4 h-4 animate-pulse" />
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 animate-pulse" />
+                  <span className="text-center">
+                    {getMotivationalMessage()}
+                  </span>
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 animate-pulse" />
                 </div>
               </div>
             )}
 
             {/* Compact Instructions */}
             {showInstructions && !isRunning && !isReady && !spacePressed && (
-              <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground animate-fade-in">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-muted-foreground animate-fade-in px-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
-                    <span className="text-xs font-mono font-semibold">SPC</span>
+                  <div className="w-9 h-9 sm:w-8 sm:h-8 bg-muted rounded-lg flex items-center justify-center">
+                    <span className="text-[10px] sm:text-xs font-mono font-semibold">
+                      SPC
+                    </span>
                   </div>
-                  <span>Hold to prepare, release to start</span>
+                  <span className="text-center sm:text-left">
+                    Hold to prepare, release to start
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
-                    <span className="text-xs font-mono font-semibold">ESC</span>
+                  <div className="w-9 h-9 sm:w-8 sm:h-8 bg-muted rounded-lg flex items-center justify-center">
+                    <span className="text-[10px] sm:text-xs font-mono font-semibold">
+                      ESC
+                    </span>
                   </div>
-                  <span>New scramble</span>
+                  <span className="text-center sm:text-left">New scramble</span>
                 </div>
               </div>
             )}
 
             {/* Action Buttons */}
             {!isRunning && (
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4">
                 <Button
                   variant="outline"
                   size="lg"
                   onClick={handleNewScramble}
                   leftIcon={<RotateCcw className="w-4 h-4" />}
+                  className="w-full sm:w-auto min-h-[44px] text-sm sm:text-base"
                 >
                   New Scramble
                 </Button>
@@ -319,6 +328,7 @@ export function TimerView({
                     size="lg"
                     onClick={resetTimer}
                     leftIcon={<Square className="w-4 h-4" />}
+                    className="w-full sm:w-auto min-h-[44px] text-sm sm:text-base"
                   >
                     Reset
                   </Button>

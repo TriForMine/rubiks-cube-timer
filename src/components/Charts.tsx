@@ -11,9 +11,6 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
   Area,
   AreaChart,
 } from "recharts";
@@ -118,7 +115,15 @@ export function Charts({ times }: ChartsProps) {
     );
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: Array<{ payload: { formattedTime: string; date?: string } }>;
+    label?: string | number;
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border rounded-lg p-3 shadow-lg">
@@ -140,7 +145,15 @@ export function Charts({ times }: ChartsProps) {
     return null;
   };
 
-  const Ao5Tooltip = ({ active, payload, label }: any) => {
+  const Ao5Tooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: Array<{ payload: { formattedAo5: string } }>;
+    label?: string | number;
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border rounded-lg p-3 shadow-lg">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, memo, useMemo } from "react";
-import { Timer } from "@/components/Timer";
 import { ScrambleDisplay } from "@/components/ScrambleDisplay";
 import { generateScramble } from "@/lib/scramble";
 import { Button } from "@/components/ui/button";
@@ -164,16 +163,29 @@ function TimerViewComponent({
   scrambleLength = 20,
   existingTimes,
 }: TimerViewProps) {
-  const [currentTime, setCurrentTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [spacePressed, setSpacePressed] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
   const [lastSolveTime, setLastSolveTime] = useState<number | null>(null);
   const [wasLastSolvePB, setWasLastSolvePB] = useState(false);
+  const [finalTime, setFinalTime] = useState(0);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  const timerDisplayRef = useRef<HTMLDivElement>(null);
+  const millisecondsDisplayRef = useRef<HTMLDivElement>(null);
+  const existingTimesRef = useRef<TimeRecord[]>(existingTimes);
+  const currentScrambleRef = useRef(currentScramble);
+
+  // Update refs when props change
+  useEffect(() => {
+    existingTimesRef.current = existingTimes;
+  }, [existingTimes]);
+
+  useEffect(() => {
+    currentScrambleRef.current = currentScramble;
+  }, [currentScramble]);
 
   const startTimer = useCallback(() => {
     setIsRunning(true);
@@ -183,10 +195,18 @@ function TimerViewComponent({
     startTimeRef.current = Date.now();
 
     intervalRef.current = setInterval(() => {
-      if (startTimeRef.current) {
-        setCurrentTime(Date.now() - startTimeRef.current);
+      if (startTimeRef.current && timerDisplayRef.current) {
+        const currentTime = Date.now() - startTimeRef.current;
+        timerDisplayRef.current.textContent = formatTime(currentTime);
+
+        if (millisecondsDisplayRef.current) {
+          const milliseconds = String(currentTime % 1000)
+            .padStart(3, "0")
+            .slice(0, 2);
+          millisecondsDisplayRef.current.textContent = `.${milliseconds}`;
+        }
       }
-    }, 10);
+    }, 16); // ~60fps
   }, []);
 
   const stopTimer = useCallback(() => {
@@ -196,20 +216,33 @@ function TimerViewComponent({
     }
 
     if (startTimeRef.current) {
-      const finalTime = Date.now() - startTimeRef.current;
-      setCurrentTime(finalTime);
-      setLastSolveTime(finalTime);
+      const completedTime = Date.now() - startTimeRef.current;
+      setFinalTime(completedTime);
+      setLastSolveTime(completedTime);
+
+      // Update display with final time
+      if (timerDisplayRef.current) {
+        timerDisplayRef.current.textContent = formatTime(completedTime);
+      }
+      if (millisecondsDisplayRef.current) {
+        const milliseconds = String(completedTime % 1000)
+          .padStart(3, "0")
+          .slice(0, 2);
+        millisecondsDisplayRef.current.textContent = `.${milliseconds}`;
+      }
 
       // Add time to records
       const newTime: TimeRecord = {
         id: Date.now().toString(),
-        time: finalTime,
-        scramble: currentScramble,
+        time: completedTime,
+        scramble: currentScrambleRef.current,
         date: new Date(),
       };
 
       // Check if this is a PB
-      const validTimes = existingTimes.filter((t) => t.penalty !== "DNF");
+      const validTimes = existingTimesRef.current.filter(
+        (t) => t.penalty !== "DNF",
+      );
       const currentBestTime =
         validTimes.length > 0
           ? Math.min(
@@ -219,7 +252,7 @@ function TimerViewComponent({
             )
           : Infinity;
 
-      setWasLastSolvePB(finalTime < currentBestTime);
+      setWasLastSolvePB(completedTime < currentBestTime);
 
       onTimeAdded(newTime);
 
@@ -230,24 +263,26 @@ function TimerViewComponent({
 
     setIsRunning(false);
     startTimeRef.current = null;
-  }, [
-    currentScramble,
-    onTimeAdded,
-    onScrambleChange,
-    scrambleLength,
-    existingTimes,
-  ]);
+  }, [onTimeAdded, onScrambleChange, scrambleLength]);
 
   const resetTimer = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    setCurrentTime(0);
+    setFinalTime(0);
     setIsRunning(false);
     setIsReady(false);
     setLastSolveTime(null);
     startTimeRef.current = null;
+
+    // Reset display
+    if (timerDisplayRef.current) {
+      timerDisplayRef.current.textContent = formatTime(0);
+    }
+    if (millisecondsDisplayRef.current) {
+      millisecondsDisplayRef.current.textContent = "";
+    }
   }, []);
 
   const handleNewScramble = useCallback(() => {
@@ -269,15 +304,17 @@ function TimerViewComponent({
       if (event.code === "Space") {
         event.preventDefault();
 
-        if (!spacePressed) {
-          setSpacePressed(true);
-
-          if (isRunning) {
-            stopTimer();
-          } else if (!isReady) {
-            setIsReady(true);
+        setSpacePressed((prev) => {
+          if (!prev) {
+            if (isRunning) {
+              stopTimer();
+            } else if (!isReady) {
+              setIsReady(true);
+            }
+            return true;
           }
-        }
+          return prev;
+        });
       } else if (event.code === "Escape") {
         event.preventDefault();
         handleNewScramble();
@@ -309,14 +346,7 @@ function TimerViewComponent({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [
-    spacePressed,
-    isRunning,
-    isReady,
-    startTimer,
-    stopTimer,
-    handleNewScramble,
-  ]);
+  }, [isRunning, isReady, startTimer, stopTimer, handleNewScramble]);
 
   // Memoize status message to prevent recalculation on every render
   const statusMessage = useMemo(() => {
@@ -347,12 +377,126 @@ function TimerViewComponent({
         <div className="w-full max-w-6xl">
           <div className="text-center space-y-4 sm:space-y-6 md:space-y-8">
             {/* Huge Timer Display */}
-            <Timer
-              time={currentTime}
-              isRunning={isRunning}
-              isReady={isReady}
-              spacePressed={spacePressed}
-            />
+            <div className="relative flex flex-col items-center justify-center py-16 overflow-hidden">
+              {/* Background Effects */}
+              <div
+                className={cn(
+                  "absolute inset-0 rounded-3xl transition-all duration-500 ease-out opacity-60",
+                  isRunning &&
+                    "bg-gradient-to-r from-green-500/10 via-transparent to-green-500/10",
+                  isReady &&
+                    "bg-gradient-to-r from-amber-500/10 via-transparent to-amber-500/10",
+                  spacePressed &&
+                    "bg-gradient-to-r from-red-500/10 via-transparent to-red-500/10",
+                  !isRunning &&
+                    !isReady &&
+                    !spacePressed &&
+                    "bg-gradient-to-r from-muted/50 via-transparent to-muted/50",
+                )}
+              />
+
+              {/* Main Timer Display */}
+              <div className="relative z-10 flex flex-col items-center justify-center">
+                <div
+                  ref={timerDisplayRef}
+                  className={cn(
+                    "timer-text font-mono font-black text-center transition-all duration-300 ease-out select-none",
+                    "text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[12rem]",
+                    "tracking-tighter leading-none",
+                    isRunning && "text-green-500 dark:text-green-400 scale-102",
+                    isReady && "text-amber-500 dark:text-amber-400 scale-105",
+                    spacePressed && "text-red-500 dark:text-red-400 scale-95",
+                    !isRunning &&
+                      !isReady &&
+                      !spacePressed &&
+                      "text-foreground scale-100",
+                    isRunning && "drop-shadow-[0_0_20px_rgba(34,197,94,0.3)]",
+                    isReady && "drop-shadow-[0_0_20px_rgba(245,158,11,0.3)]",
+                    spacePressed &&
+                      "drop-shadow-[0_0_20px_rgba(239,68,68,0.3)]",
+                  )}
+                  style={{
+                    textShadow: isRunning
+                      ? "0 0 20px currentColor"
+                      : isReady
+                        ? "0 0 15px currentColor"
+                        : spacePressed
+                          ? "0 0 10px currentColor"
+                          : "0 2px 4px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  {formatTime(finalTime)}
+                </div>
+
+                {/* Milliseconds Display */}
+                {!isRunning && finalTime > 0 && (
+                  <div
+                    ref={millisecondsDisplayRef}
+                    className={cn(
+                      "text-lg sm:text-xl md:text-2xl font-mono font-semibold mt-2 transition-all duration-300",
+                      "text-muted-foreground animate-fade-in tabular-nums",
+                    )}
+                  >
+                    .
+                    {String(finalTime % 1000)
+                      .padStart(3, "0")
+                      .slice(0, 2)}
+                  </div>
+                )}
+
+                {/* State Indicators */}
+                <div className="flex items-center space-x-4 mt-6">
+                  <div className="flex space-x-2">
+                    <div
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-all duration-300",
+                        spacePressed && !isRunning
+                          ? "bg-red-500 shadow-lg shadow-red-500/50 scale-125 animate-pulse"
+                          : "bg-muted-foreground/20",
+                      )}
+                    />
+                    <div
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-all duration-300",
+                        isReady
+                          ? "bg-amber-500 shadow-lg shadow-amber-500/50 scale-125 animate-pulse"
+                          : "bg-muted-foreground/20",
+                      )}
+                    />
+                    <div
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-all duration-300",
+                        isRunning
+                          ? "bg-green-500 shadow-lg shadow-green-500/50 scale-125 animate-pulse"
+                          : "bg-muted-foreground/20",
+                      )}
+                    />
+                  </div>
+                  <div className="w-px h-4 bg-border/50" />
+                  <div
+                    className={cn(
+                      "text-xs font-bold tracking-wider transition-all duration-300 uppercase",
+                      isRunning &&
+                        "text-green-500 dark:text-green-400 animate-pulse",
+                      isReady && "text-amber-500 dark:text-amber-400",
+                      spacePressed && "text-red-500 dark:text-red-400",
+                      !isRunning &&
+                        !isReady &&
+                        !spacePressed &&
+                        "text-muted-foreground",
+                    )}
+                  >
+                    {isRunning
+                      ? "SOLVING"
+                      : isReady
+                        ? "READY"
+                        : spacePressed
+                          ? "HOLD"
+                          : "IDLE"}
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Status Message */}
             <div
@@ -398,7 +542,7 @@ function TimerViewComponent({
             {/* Action Buttons */}
             <ActionButtons
               isRunning={isRunning}
-              currentTime={currentTime}
+              currentTime={finalTime}
               onNewScramble={handleNewScramble}
               onReset={resetTimer}
             />

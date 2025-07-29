@@ -201,8 +201,3 @@ pnpm-lock.yaml
 # Bundle analyzer
 .next/analyze/
 bundle-analyzer-report.html
-
-# Sitemap
-sitemap.xml
-sitemap-*.xml
-robots.txt.backup

@@ -240,7 +240,15 @@ function SidebarContent({
             </p>
           </div>
           <p className="text-xs text-muted-foreground">
-            Built with ❤️ using Next.js & shadcn/ui
+            Built with ❤️ by{" "}
+            <a
+              href="https://github.com/TriForMine/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium"
+            >
+              TriForMine
+            </a>
           </p>
         </div>
       </div>

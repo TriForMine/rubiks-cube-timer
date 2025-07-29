@@ -15,7 +15,8 @@
     "clean": "rm -rf .next out node_modules/.cache",
     "clean:all": "rm -rf .next out node_modules/.cache public/sw.js",
     "verify-swc": "bun run next info",
-    "pwa:build": "bun run clean:all && bun run next build"
+    "pwa:build": "bun run clean:all && bun run next build",
+    "generate-og": "node generate-og-image.js"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",

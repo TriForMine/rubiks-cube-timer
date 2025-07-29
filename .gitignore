@@ -10,7 +10,6 @@ node_modules/
 
 # Bun
 .bun/
-bun.lockb
 
 # Next.js
 .next/

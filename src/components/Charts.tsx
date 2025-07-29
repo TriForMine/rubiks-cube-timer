@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatTime } from "@/lib/utils";
 import { TimeRecord } from "@/app/page";
-import { TrendingUp, Clock, Target, BarChart3 } from "lucide-react";
+import { TrendingUp, Clock, Target, BarChart3, Activity } from "lucide-react";
 
 interface ChartsProps {
   times: TimeRecord[];
@@ -230,22 +230,58 @@ export function Charts({ times }: ChartsProps) {
       )}
 
       {/* Charts */}
-      <Tabs defaultValue="progression" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="progression">Time Progression</TabsTrigger>
-          <TabsTrigger value="averages">Averages</TabsTrigger>
-          <TabsTrigger value="distribution">Distribution</TabsTrigger>
+      <Tabs defaultValue="progression" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 h-12 bg-muted/50 p-1 rounded-lg border border-border shadow-sm">
+          <TabsTrigger
+            value="progression"
+            className="!h-10 !px-4 !py-2 !font-semibold !text-sm !text-muted-foreground
+                     data-[state=active]:!bg-background data-[state=active]:!text-foreground
+                     data-[state=active]:!shadow-md data-[state=active]:!border data-[state=active]:!border-border/50
+                     data-[state=active]:!font-bold
+                     hover:!bg-background/60 hover:!text-foreground
+                     !transition-all !duration-200 !cursor-pointer !rounded-md
+                     flex !items-center !justify-center !gap-2"
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>Time Progression</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="averages"
+            className="!h-10 !px-4 !py-2 !font-semibold !text-sm !text-muted-foreground
+                     data-[state=active]:!bg-background data-[state=active]:!text-foreground
+                     data-[state=active]:!shadow-md data-[state=active]:!border data-[state=active]:!border-border/50
+                     data-[state=active]:!font-bold
+                     hover:!bg-background/60 hover:!text-foreground
+                     !transition-all !duration-200 !cursor-pointer !rounded-md
+                     flex !items-center !justify-center !gap-2"
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>Averages</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="distribution"
+            className="!h-10 !px-4 !py-2 !font-semibold !text-sm !text-muted-foreground
+                     data-[state=active]:!bg-background data-[state=active]:!text-foreground
+                     data-[state=active]:!shadow-md data-[state=active]:!border data-[state=active]:!border-border/50
+                     data-[state=active]:!font-bold
+                     hover:!bg-background/60 hover:!text-foreground
+                     !transition-all !duration-200 !cursor-pointer !rounded-md
+                     flex !items-center !justify-center !gap-2"
+          >
+            <Activity className="w-4 h-4" />
+            <span>Distribution</span>
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="progression" className="space-y-4">
+        <TabsContent value="progression" className="space-y-4 mt-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-4">
               <CardTitle className="flex items-center">
                 <TrendingUp className="w-5 h-5 mr-2" />
                 Solve Time Progression
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-2">
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData.progression}>
@@ -298,15 +334,15 @@ export function Charts({ times }: ChartsProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="averages" className="space-y-4">
+        <TabsContent value="averages" className="space-y-4 mt-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-4">
               <CardTitle className="flex items-center">
                 <BarChart3 className="w-5 h-5 mr-2" />
                 Average of 5 Progression
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-2">
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData.ao5Data}>
@@ -344,15 +380,15 @@ export function Charts({ times }: ChartsProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="distribution" className="space-y-4">
+        <TabsContent value="distribution" className="space-y-4 mt-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-4">
               <CardTitle className="flex items-center">
                 <BarChart3 className="w-5 h-5 mr-2" />
                 Time Distribution
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-2">
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData.distribution}>

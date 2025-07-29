@@ -79,7 +79,8 @@ export function ScrambleDialog({
             </h4>
             <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">
               After applying the scramble, your cube should match the pattern
-              above. Use this to verify you've executed the scramble correctly.
+              above. Use this to verify you&apos;ve executed the scramble
+              correctly.
             </p>
             <div className="text-xs text-amber-700 dark:text-amber-300">
               <strong>Tip:</strong> Compare the colors on each visible face with

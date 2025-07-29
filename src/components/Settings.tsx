@@ -95,7 +95,7 @@ export function Settings({
           }
 
           // Validate the date is not Invalid Date
-          if (isNaN(dateObj.getTime())) {
+          if (Number.isNaN(dateObj.getTime())) {
             dateObj = new Date();
           }
 

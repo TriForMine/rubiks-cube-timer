@@ -1,6 +1,4 @@
 import {
-  applyMove,
-  applyScramble,
   applyScrambleToCube,
   createSolvedCube,
   isCubeSolved,

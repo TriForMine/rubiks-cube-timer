@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { RefreshCw, Copy, Check, Shuffle, Eye } from "lucide-react";
 import { generateScramble } from "@/lib/scramble";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ interface ScrambleDisplayProps {
   scrambleLength?: number;
 }
 
-export function ScrambleDisplay({
+function ScrambleDisplayComponent({
   scramble,
   onScrambleChange,
   scrambleLength = 20,
@@ -144,3 +144,5 @@ export function ScrambleDisplay({
     </div>
   );
 }
+
+export const ScrambleDisplay = memo(ScrambleDisplayComponent);

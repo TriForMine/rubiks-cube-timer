@@ -42,7 +42,6 @@ export function ScrambleDialog({
 
   // Calculate the cube state after applying the scramble
   const scrambledCubeState = useMemo(() => {
-    console.log("Scramble:", scramble);
     return applyScramble(scramble);
   }, [scramble]);
 

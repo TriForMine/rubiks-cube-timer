@@ -1,7 +1,7 @@
 "use client";
 
 import { formatTime, cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 
 interface TimerProps {
   time: number;
@@ -10,7 +10,12 @@ interface TimerProps {
   spacePressed: boolean;
 }
 
-export function Timer({ time, isRunning, isReady, spacePressed }: TimerProps) {
+function TimerComponent({
+  time,
+  isRunning,
+  isReady,
+  spacePressed,
+}: TimerProps) {
   const [displayTime, setDisplayTime] = useState(time);
   const [pulseKey, setPulseKey] = useState(0);
 
@@ -254,3 +259,5 @@ export function Timer({ time, isRunning, isReady, spacePressed }: TimerProps) {
     </div>
   );
 }
+
+export const Timer = memo(TimerComponent);

@@ -244,7 +244,8 @@ export default function AboutPage() {
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold mb-4">Why Choose CubeTimer?</h2>
               <p className="text-lg text-muted-foreground">
-                Designed by cubers, for cubers. Here's what makes us different.
+                Designed by cubers, for cubers. Here&apos;s what makes us
+                different.
               </p>
             </div>
 

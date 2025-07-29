@@ -1,8 +1,6 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# Dependencies
+node_modules/
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -10,32 +8,201 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
+# Bun
+.bun/
+bun.lockb
 
-# next.js
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Production builds
+/build
 /.next/
 /out/
 
-# production
-/build
+# PWA / Service Worker files
+sw.js
+sw.js.map
+workbox-*.js
+workbox-*.js.map
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
 
-# misc
-.DS_Store
-*.pem
+# Cache and temporary files
+.cache/
+.temp/
+.tmp/
+*.cache
+*.tmp
 
-# debug
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# vercel
-.vercel
+# Coverage directory used by tools like istanbul
+lib-cov
+coverage/
+*.lcov
+.nyc_output
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+.tscache/
+
+# ESLint
+.eslintcache
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Windows
+*.exe
+*.msi
+*.msm
+*.msp
+
+# Mac
+.AppleDouble
+.LSOverride
+Icon
+
+# Linux
+*~
+
+# Vercel
+.vercel
+.vercel.json
+
+# Turbo
+.turbo
+
+# Sentry Config File
+.sentryclirc
+
+# Local development
+*.local
+
+# Debug
+debug.log
+
+# Sharp (image optimization)
+.sharp/
+
+# Lighthouse CI
+lhci_reports/
+
+# Analytics and tracking
+.firebase/
+.firebaserc
+firebase-debug.log*
+firebase-debug.*.log*
+
+# Testing
+coverage/
+.nyc_output/
+junit.xml
+test-results/
+playwright-report/
+test-results.xml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Lock files (keep bun.lock but ignore others)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Bundle analyzer
+.next/analyze/
+bundle-analyzer-report.html
+
+# Sitemap
+sitemap.xml
+sitemap-*.xml
+robots.txt.backup

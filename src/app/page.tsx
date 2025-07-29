@@ -8,6 +8,8 @@ import { TimesList } from "@/components/TimesList";
 import { Settings } from "@/components/Settings";
 import { Charts } from "@/components/Charts";
 import { PBCelebration } from "@/components/PBCelebration";
+import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { ServiceWorkerStatus } from "@/components/ServiceWorkerStatus";
 import { generateScramble } from "@/lib/scramble";
 import { useSettings } from "@/contexts/SettingsContext";
 
@@ -194,6 +196,10 @@ export default function Home() {
           }}
         />
       )}
+
+      {/* PWA Components */}
+      <PWAInstallButton />
+      <ServiceWorkerStatus />
     </AppLayout>
   );
 }

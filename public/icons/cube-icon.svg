@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512"
+     xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" rx="80" fill="#1a1a1a"/>
+  <ellipse cx="256" cy="414" rx="116.91342951089922" ry="22"
+           fill="#000" opacity="0.35"/>
+
+  <path d="M 256.0,106.0 L 299.3,131.0 L 256.0,156.0 L 212.7,131.0 Z" fill="#ffffff" stroke="#191919" stroke-width="2"/>
+  <path d="M 299.3,131.0 L 342.6,156.0 L 299.3,181.0 L 256.0,156.0 Z" fill="#ffffff" stroke="#191919" stroke-width="2"/>
+  <path d="M 342.6,156.0 L 385.9,181.0 L 342.6,206.0 L 299.3,181.0 Z" fill="#ffffff" stroke="#191919" stroke-width="2"/>
+  <path d="M 212.7,131.0 L 256.0,156.0 L 212.7,181.0 L 169.4,156.0 Z" fill="#ffffff" stroke="#191919" stroke-width="2"/>
+  <path d="M 256.0,156.0 L 299.3,181.0 L 256.0,206.0 L 212.7,181.0 Z" fill="#ffffff" stroke="#191919" stroke-width="2"/>
+  <path d="M 299.3,181.0 L 342.6,206.0 L 299.3,231.0 L 256.0,206.0 Z" fill="#ffffff" stroke="#191919" stroke-width="2"/>
+  <path d="M 169.4,156.0 L 212.7,181.0 L 169.4,206.0 L 126.1,181.0 Z" fill="#ffffff" stroke="#191919" stroke-width="2"/>
+  <path d="M 212.7,181.0 L 256.0,206.0 L 212.7,231.0 L 169.4,206.0 Z" fill="#ffffff" stroke="#191919" stroke-width="2"/>
+  <path d="M 256.0,206.0 L 299.3,231.0 L 256.0,256.0 L 212.7,231.0 Z" fill="#ffffff" stroke="#191919" stroke-width="2"/>
+  <path d="M 385.9,181.0 L 342.6,206.0 L 342.6,256.0 L 385.9,231.0 Z" fill="#009E60" stroke="#191919" stroke-width="2"/>
+  <path d="M 342.6,206.0 L 299.3,231.0 L 299.3,281.0 L 342.6,256.0 Z" fill="#009E60" stroke="#191919" stroke-width="2"/>
+  <path d="M 299.3,231.0 L 256.0,256.0 L 256.0,306.0 L 299.3,281.0 Z" fill="#009E60" stroke="#191919" stroke-width="2"/>
+  <path d="M 385.9,231.0 L 342.6,256.0 L 342.6,306.0 L 385.9,281.0 Z" fill="#009E60" stroke="#191919" stroke-width="2"/>
+  <path d="M 342.6,256.0 L 299.3,281.0 L 299.3,331.0 L 342.6,306.0 Z" fill="#009E60" stroke="#191919" stroke-width="2"/>
+  <path d="M 299.3,281.0 L 256.0,306.0 L 256.0,356.0 L 299.3,331.0 Z" fill="#009E60" stroke="#191919" stroke-width="2"/>
+  <path d="M 385.9,281.0 L 342.6,306.0 L 342.6,356.0 L 385.9,331.0 Z" fill="#009E60" stroke="#191919" stroke-width="2"/>
+  <path d="M 342.6,306.0 L 299.3,331.0 L 299.3,381.0 L 342.6,356.0 Z" fill="#009E60" stroke="#191919" stroke-width="2"/>
+  <path d="M 299.3,331.0 L 256.0,356.0 L 256.0,406.0 L 299.3,381.0 Z" fill="#009E60" stroke="#191919" stroke-width="2"/>
+  <path d="M 126.1,181.0 L 169.4,206.0 L 169.4,256.0 L 126.1,231.0 Z" fill="#FF5800" stroke="#191919" stroke-width="2"/>
+  <path d="M 169.4,206.0 L 212.7,231.0 L 212.7,281.0 L 169.4,256.0 Z" fill="#FF5800" stroke="#191919" stroke-width="2"/>
+  <path d="M 212.7,231.0 L 256.0,256.0 L 256.0,306.0 L 212.7,281.0 Z" fill="#FF5800" stroke="#191919" stroke-width="2"/>
+  <path d="M 126.1,231.0 L 169.4,256.0 L 169.4,306.0 L 126.1,281.0 Z" fill="#FF5800" stroke="#191919" stroke-width="2"/>
+  <path d="M 169.4,256.0 L 212.7,281.0 L 212.7,331.0 L 169.4,306.0 Z" fill="#FF5800" stroke="#191919" stroke-width="2"/>
+  <path d="M 212.7,281.0 L 256.0,306.0 L 256.0,356.0 L 212.7,331.0 Z" fill="#FF5800" stroke="#191919" stroke-width="2"/>
+  <path d="M 126.1,281.0 L 169.4,306.0 L 169.4,356.0 L 126.1,331.0 Z" fill="#FF5800" stroke="#191919" stroke-width="2"/>
+  <path d="M 169.4,306.0 L 212.7,331.0 L 212.7,381.0 L 169.4,356.0 Z" fill="#FF5800" stroke="#191919" stroke-width="2"/>
+  <path d="M 212.7,331.0 L 256.0,356.0 L 256.0,406.0 L 212.7,381.0 Z" fill="#FF5800" stroke="#191919" stroke-width="2"/>
+
+  <path d="M 126.1,181.0 L 256.0,256.0 L 256.0,406.0 L 126.1,331.0 Z" fill="none" stroke="#191919" stroke-width="5"/>
+  <path d="M 385.9,181.0 L 256.0,256.0 L 256.0,406.0 L 385.9,331.0 Z" fill="none" stroke="#191919" stroke-width="5"/>
+  <path d="M 256.0,106.0 L 385.9,181.0 L 256.0,256.0 L 126.1,181.0 Z" fill="none" stroke="#191919" stroke-width="5"/>
+</svg>

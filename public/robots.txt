@@ -1,0 +1,23 @@
+# Robots.txt for Rubik's Cube Timer PWA
+# https://www.robotstxt.org/robotstxt.html
+
+User-agent: *
+Allow: /
+
+# Allow access to PWA resources
+Allow: /manifest.json
+Allow: /sw.js
+Allow: /workbox-*.js
+Allow: /icons/
+Allow: /screenshots/
+
+# Disallow development and build files
+Disallow: /_next/static/chunks/
+Disallow: /api/
+Disallow: /*.json$
+
+# Sitemap location (if you add one later)
+# Sitemap: https://yourdomain.com/sitemap.xml
+
+# Crawl-delay (optional, be respectful to search engines)
+Crawl-delay: 1

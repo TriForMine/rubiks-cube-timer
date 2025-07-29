@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   Timer,
   BarChart3,
@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StatCard } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
@@ -254,6 +255,25 @@ export function AppLayout({
   sessionStats,
 }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Handle online/offline status
+  useEffect(() => {
+    // Set initial online status
+    setIsOnline(navigator.onLine);
+
+    // Listen for online/offline events
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const activeItem = sidebarItems.find((item) => item.id === activeTab);
 
@@ -370,7 +390,23 @@ export function AppLayout({
                 className="h-6 hidden md:block opacity-50"
               />
 
-              <ThemeToggle />
+              {/* Online Status Indicator */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  {isOnline ? (
+                    <Wifi className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <WifiOff className="h-4 w-4 text-destructive" />
+                  )}
+                  <span className="text-xs text-muted-foreground hidden sm:inline">
+                    {isOnline ? "Online" : "Offline"}
+                  </span>
+                </div>
+
+                <Separator orientation="vertical" className="h-4 opacity-50" />
+
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </header>

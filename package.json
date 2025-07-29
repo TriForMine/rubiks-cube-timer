@@ -3,16 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "build:analyze": "ANALYZE=true next build",
-    "start": "next start",
-    "start:prod": "next start",
-    "lint": "next lint --fix",
-    "lint:strict": "next lint",
-    "type-check": "tsc --noEmit",
+    "dev": "bun run next dev --turbopack",
+    "dev:webpack": "bun run next dev",
+    "build": "bun run next build",
+    "build:analyze": "ANALYZE=true bun run next build",
+    "start": "bun run next start",
+    "start:prod": "bun run next start",
+    "lint": "bun run next lint --fix",
+    "lint:strict": "bun run next lint",
+    "type-check": "bun run tsc --noEmit",
     "clean": "rm -rf .next out node_modules/.cache",
-    "verify-swc": "next info"
+    "clean:all": "rm -rf .next out node_modules/.cache public/sw.js",
+    "verify-swc": "bun run next info",
+    "pwa:build": "bun run clean:all && bun run next build"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -26,6 +29,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@serwist/next": "^9.1.1",
     "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -37,6 +41,7 @@
     "react-chartjs-2": "^5.3.0",
     "react-dom": "19.1.0",
     "recharts": "^3.1.0",
+    "serwist": "^9.1.1",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
@@ -47,6 +52,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.4.4",
+    "sharp": "^0.34.3",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.6",
     "typescript": "^5"

@@ -1,17 +1,65 @@
 import type { NextConfig } from "next";
+import withSerwistInit from "@serwist/next";
+
+// Only enable Serwist in production or when explicitly building
+const isDev = process.env.NODE_ENV === "development";
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  disable: isDev,
+  scope: "/",
+  swUrl: "/sw.js",
+});
 
 const nextConfig: NextConfig = {
-  // SWC is enabled by default in Next.js 15
-  // Minimal config for stable builds
   output: "export",
 
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },
 
+  // Turbopack configuration (moved from experimental)
+  turbopack: {
+    rules: {
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js",
+      },
+    },
+  },
+
   images: {
     formats: ["image/webp", "image/avif"],
+    unoptimized: true,
+  },
+
+  // Webpack configuration fallback
+  webpack: (config, { dev }) => {
+    // Skip webpack modifications in development with Turbopack
+    if (dev && process.env.TURBOPACK) {
+      return config;
+    }
+
+    // Add fallbacks for Node.js modules
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+    };
+
+    return config;
+  },
+
+  // Improve build performance
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
+
+  typescript: {
+    ignoreBuildErrors: false,
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

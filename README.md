@@ -84,7 +84,7 @@ bun run start
 | Key | Action |
 |-----|--------|
 | `SPACE` | Start/Stop timer |
-| `ESC` | Generate new scramble |
+| `N` | Generate new scramble |
 | `DELETE` | Delete last time |
 
 **Note**: The timer currently requires a physical keyboard and is optimized for desktop use. Mobile device support is planned for future releases.

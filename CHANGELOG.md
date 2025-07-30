@@ -63,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Keyboard & Controls
 - Comprehensive keyboard shortcuts:
   - `SPACE`: Start/stop timer
-  - `ESC`: Generate new scramble
+  - `N`: Generate new scramble
   - `DELETE`: Delete last time
 - Focus management and keyboard navigation
 - Optimized for keyboard-based controls

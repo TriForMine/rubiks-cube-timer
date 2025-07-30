@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 interface ScrambleStepByStepProps {
 	scramble: string;
 	onComplete?: () => void;
+	onStepComplete?: (step: number, move: string) => void;
 	className?: string;
 	autoPlay?: boolean;
 	initialSpeed?: number;
@@ -16,7 +17,7 @@ interface ScrambleStepByStepProps {
 
 interface PlaybackSettings {
 	speed: number;
-	autoRotate: boolean;
+	enableRotationControls: boolean;
 	showMoveHistory: boolean;
 }
 
@@ -31,6 +32,7 @@ const SPEED_OPTIONS = [
 export function ScrambleStepByStep({
 	scramble,
 	onComplete,
+	onStepComplete,
 	className = "",
 	autoPlay = false,
 	initialSpeed = 1000,
@@ -40,7 +42,7 @@ export function ScrambleStepByStep({
 
 	const [settings, setSettings] = useState<PlaybackSettings>({
 		speed: initialSpeed,
-		autoRotate: true,
+		enableRotationControls: true,
 		showMoveHistory: true,
 	});
 	const [showSettings, setShowSettings] = useState(false);
@@ -95,9 +97,10 @@ export function ScrambleStepByStep({
 					stepByStep={true}
 					currentStep={currentStep}
 					animationSpeed={settings.speed}
-					autoRotate={settings.autoRotate}
+					enableRotationControls={settings.enableRotationControls}
 					className="w-full"
 					onScrambleComplete={handleAnimationComplete}
+					onStepComplete={onStepComplete}
 				/>
 			</div>
 
@@ -220,18 +223,18 @@ export function ScrambleStepByStep({
 						<div className="flex items-center space-x-2">
 							<input
 								type="checkbox"
-								id="autoRotate"
-								checked={settings.autoRotate}
+								id="enableRotationControls"
+								checked={settings.enableRotationControls}
 								onChange={(e) =>
 									setSettings((prev) => ({
 										...prev,
-										autoRotate: e.target.checked,
+										enableRotationControls: e.target.checked,
 									}))
 								}
 								className="rounded"
 							/>
-							<label htmlFor="autoRotate" className="text-sm">
-								Auto-rotate cube
+							<label htmlFor="enableRotationControls" className="text-sm">
+								Enable rotation controls
 							</label>
 						</div>
 

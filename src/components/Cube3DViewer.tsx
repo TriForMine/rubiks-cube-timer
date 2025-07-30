@@ -10,7 +10,7 @@ interface Cube3DViewerProps {
 	width?: number;
 	height?: number;
 	scramble?: string;
-	autoRotate?: boolean;
+	enableRotationControls?: boolean;
 	className?: string;
 	onMoveComplete?: (move: string) => void;
 	onScrambleComplete?: () => void;
@@ -24,7 +24,7 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
 	width = 400,
 	height = 400,
 	scramble = "",
-	autoRotate = false,
+	enableRotationControls = false,
 	className = "",
 	onScrambleComplete,
 	stepByStep = false,
@@ -77,13 +77,15 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
 			if (!rendererRef.current || isAnimating) return;
 
 			try {
+				const stepDifference = Math.abs(currentStep - previousStep);
+
 				if (currentStep === 0) {
 					// Reset to solved state
 					const solvedState = createSolvedCube();
 					rendererRef.current.updateState(solvedState);
 					setPreviousStep(0);
-				} else if (currentStep > previousStep) {
-					// Moving forward - animate the new move
+				} else if (stepDifference === 1 && currentStep > previousStep) {
+					// Single step forward - animate the move
 					if (currentStep <= moves.length && moves[currentStep - 1]) {
 						setIsAnimating(true);
 						await rendererRef.current.animateMove(moves[currentStep - 1], animationSpeed);
@@ -94,8 +96,31 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
 							onStepComplete(currentStep - 1, moves[currentStep - 1]);
 						}
 					}
-				} else if (currentStep < previousStep) {
-					// Moving backward - rebuild state up to current step
+				} else if (stepDifference === 1 && currentStep < previousStep) {
+					// Single step backward - animate the reverse move
+					if (previousStep > 0 && moves[previousStep - 1]) {
+						setIsAnimating(true);
+						const moveToReverse = moves[previousStep - 1];
+						// Get the reverse of the move (add ' if none, remove ' if present, handle 2)
+						let reverseMove = moveToReverse;
+						if (moveToReverse.includes("'")) {
+							reverseMove = moveToReverse.replace("'", "");
+						} else if (moveToReverse.includes("2")) {
+							reverseMove = moveToReverse; // 2 moves are their own reverse
+						} else {
+							reverseMove = `${moveToReverse}'`;
+						}
+
+						await rendererRef.current.animateMove(reverseMove, animationSpeed);
+						setIsAnimating(false);
+						setPreviousStep(currentStep);
+
+						if (onStepComplete && currentStep > 0) {
+							onStepComplete(currentStep - 1, moves[currentStep - 1]);
+						}
+					}
+				} else {
+					// Multi-step jump or backward movement - rebuild state instantly
 					const state = createSolvedCube();
 					const movesToApply = moves.slice(0, currentStep);
 
@@ -106,8 +131,9 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
 					rendererRef.current.updateState(state);
 					setPreviousStep(currentStep);
 
-					if (onStepComplete && currentStep > 0 && moves[currentStep - 1]) {
-						onStepComplete(currentStep - 1, moves[currentStep - 1]);
+					if (onStepComplete && currentStep > 0 && currentStep <= moves.length) {
+						const currentMove = moves[currentStep - 1];
+						onStepComplete(currentStep - 1, currentMove);
 					}
 				}
 			} catch (error) {
@@ -166,12 +192,9 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
 		animateNewScramble();
 	}, [scramble, currentScramble, onScrambleComplete, stepByStep, animationSpeed]);
 
-	// Note: animateMove function removed as it's not currently used
-	// Can be re-added if needed for external move animations
-
 	// Mouse and touch interaction for rotation
 	useEffect(() => {
-		if (!canvasRef.current || !autoRotate) return;
+		if (!canvasRef.current || !enableRotationControls) return;
 
 		const canvas = canvasRef.current;
 		let isDragging = false;
@@ -283,10 +306,10 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
 			canvas.removeEventListener("touchmove", handleTouchMove);
 			canvas.removeEventListener("touchend", handleTouchEnd);
 		};
-	}, [autoRotate]);
+	}, [enableRotationControls]);
 
 	return (
-		<div className={`relative ${className}`}>
+		<div className={`relative flex justify-center ${className}`}>
 			<canvas
 				ref={canvasRef}
 				width={width}

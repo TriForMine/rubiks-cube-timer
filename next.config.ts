@@ -1,65 +1,65 @@
-import type { NextConfig } from "next";
 import withSerwistInit from "@serwist/next";
+import type { NextConfig } from "next";
 
 // Only enable Serwist in production or when explicitly building
 const isDev = process.env.NODE_ENV === "development";
 
 const withSerwist = withSerwistInit({
-  swSrc: "src/app/sw.ts",
-  swDest: "public/sw.js",
-  disable: isDev,
-  scope: "/",
-  swUrl: "/sw.js",
+	swSrc: "src/app/sw.ts",
+	swDest: "public/sw.js",
+	disable: isDev,
+	scope: "/",
+	swUrl: "/sw.js",
 });
 
 const nextConfig: NextConfig = {
-  output: "export",
+	output: "export",
 
-  experimental: {
-    optimizePackageImports: ["lucide-react"],
-  },
+	experimental: {
+		optimizePackageImports: ["lucide-react"],
+	},
 
-  // Turbopack configuration (moved from experimental)
-  turbopack: {
-    rules: {
-      "*.svg": {
-        loaders: ["@svgr/webpack"],
-        as: "*.js",
-      },
-    },
-  },
+	// Turbopack configuration (moved from experimental)
+	turbopack: {
+		rules: {
+			"*.svg": {
+				loaders: ["@svgr/webpack"],
+				as: "*.js",
+			},
+		},
+	},
 
-  images: {
-    formats: ["image/webp", "image/avif"],
-    unoptimized: true,
-  },
+	images: {
+		formats: ["image/webp", "image/avif"],
+		unoptimized: true,
+	},
 
-  // Webpack configuration fallback
-  webpack: (config, { dev }) => {
-    // Skip webpack modifications in development with Turbopack
-    if (dev && process.env.TURBOPACK) {
-      return config;
-    }
+	// Webpack configuration fallback
+	webpack: (config, { dev }) => {
+		// Skip webpack modifications in development with Turbopack
+		if (dev && process.env.TURBOPACK) {
+			return config;
+		}
 
-    // Add fallbacks for Node.js modules
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      net: false,
-      tls: false,
-    };
+		// Add fallbacks for Node.js modules
+		config.resolve.fallback = {
+			...config.resolve.fallback,
+			fs: false,
+			net: false,
+			tls: false,
+		};
 
-    return config;
-  },
+		return config;
+	},
 
-  // Improve build performance
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
+	// Improve build performance
+	eslint: {
+		ignoreDuringBuilds: false,
+	},
 
-  typescript: {
-    ignoreBuildErrors: false,
-  },
+	typescript: {
+		ignoreBuildErrors: false,
+	},
 };
 
 export default withSerwist(nextConfig);

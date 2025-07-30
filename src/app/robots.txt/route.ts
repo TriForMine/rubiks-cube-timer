@@ -1,9 +1,9 @@
 export const dynamic = "force-static";
 
 export async function GET(): Promise<Response> {
-  const baseUrl = "https://rubikscubetimer.triformine.dev";
+	const baseUrl = "https://rubikscubetimer.triformine.dev";
 
-  const robotsTxt = `User-agent: *
+	const robotsTxt = `User-agent: *
 Allow: /
 
 # Allow access to PWA resources
@@ -24,9 +24,9 @@ Sitemap: ${baseUrl}/sitemap.xml
 # Crawl-delay (optional, be respectful to search engines)
 Crawl-delay: 1`;
 
-  return new Response(robotsTxt, {
-    headers: {
-      "Content-Type": "text/plain",
-    },
-  });
+	return new Response(robotsTxt, {
+		headers: {
+			"Content-Type": "text/plain",
+		},
+	});
 }

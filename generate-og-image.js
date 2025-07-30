@@ -3,8 +3,8 @@
 // Generates an OG image (1200x630) for social media sharing
 // Inspired by the Rubik's cube icon design with isometric cube and branding
 // -----------------------------------------------------------------------------
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
 const sharp = require("sharp");
 
 // -----------------------------------------------------------------------------
@@ -20,118 +20,116 @@ const CELL = CUBE_SIZE / 6; // Scale cube size
 
 // Project 3D world coordinates to 2D screen coordinates
 const project = ([x, y, z], [ox, oy]) => [
-  ox + (x - z) * COS * CELL,
-  oy + (x + z) * SIN * CELL + y * CELL,
+	ox + (x - z) * COS * CELL,
+	oy + (x + z) * SIN * CELL + y * CELL,
 ];
 
 // -----------------------------------------------------------------------------
 // SVG OG Image Generator
 // -----------------------------------------------------------------------------
 function generateOGImageSVG() {
-  // Position cube in the left side of the OG image
-  const cubeHeight = 6 * CELL;
-  const cubeOrigin = [200, (OG_HEIGHT - cubeHeight) / 2];
+	// Position cube in the left side of the OG image
+	const cubeHeight = 6 * CELL;
+	const cubeOrigin = [200, (OG_HEIGHT - cubeHeight) / 2];
 
-  // Define cube faces (same as icon: white top, orange front, green right)
-  const faces = [
-    {
-      colour: "#ffffff", // white top
-      anchor: [0, 0, 0],
-      u: [1, 0, 0],
-      v: [0, 0, 1],
-    },
-    {
-      colour: "#009E60", // green right
-      anchor: [3, 0, 0],
-      u: [0, 0, 1],
-      v: [0, 1, 0],
-    },
-    {
-      colour: "#FF5800", // orange front
-      anchor: [0, 0, 3],
-      u: [1, 0, 0],
-      v: [0, 1, 0],
-    },
-  ];
+	// Define cube faces (same as icon: white top, orange front, green right)
+	const faces = [
+		{
+			colour: "#ffffff", // white top
+			anchor: [0, 0, 0],
+			u: [1, 0, 0],
+			v: [0, 0, 1],
+		},
+		{
+			colour: "#009E60", // green right
+			anchor: [3, 0, 0],
+			u: [0, 0, 1],
+			v: [0, 1, 0],
+		},
+		{
+			colour: "#FF5800", // orange front
+			anchor: [0, 0, 3],
+			u: [1, 0, 0],
+			v: [0, 1, 0],
+		},
+	];
 
-  const stickers = [];
+	const stickers = [];
 
-  // Generate cube stickers
-  for (const { colour, anchor, u, v } of faces) {
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 3; col++) {
-        const tl = [
-          anchor[0] + col * u[0] + row * v[0],
-          anchor[1] + col * u[1] + row * v[1],
-          anchor[2] + col * u[2] + row * v[2],
-        ];
+	// Generate cube stickers
+	for (const { colour, anchor, u, v } of faces) {
+		for (let row = 0; row < 3; row++) {
+			for (let col = 0; col < 3; col++) {
+				const tl = [
+					anchor[0] + col * u[0] + row * v[0],
+					anchor[1] + col * u[1] + row * v[1],
+					anchor[2] + col * u[2] + row * v[2],
+				];
 
-        const quad = [
-          tl,
-          [tl[0] + u[0], tl[1] + u[1], tl[2] + u[2]],
-          [tl[0] + u[0] + v[0], tl[1] + u[1] + v[1], tl[2] + u[2] + v[2]],
-          [tl[0] + v[0], tl[1] + v[1], tl[2] + v[2]],
-        ];
+				const quad = [
+					tl,
+					[tl[0] + u[0], tl[1] + u[1], tl[2] + u[2]],
+					[tl[0] + u[0] + v[0], tl[1] + u[1] + v[1], tl[2] + u[2] + v[2]],
+					[tl[0] + v[0], tl[1] + v[1], tl[2] + v[2]],
+				];
 
-        const path =
-          quad
-            .map((p, i) => {
-              const [sx, sy] = project(p, cubeOrigin);
-              return `${i ? "L" : "M"} ${sx.toFixed(1)},${sy.toFixed(1)}`;
-            })
-            .join(" ") + " Z";
+				const path = `${quad
+					.map((p, i) => {
+						const [sx, sy] = project(p, cubeOrigin);
+						return `${i ? "L" : "M"} ${sx.toFixed(1)},${sy.toFixed(1)}`;
+					})
+					.join(" ")} Z`;
 
-        stickers.push({ path, colour });
-      }
-    }
-  }
+				stickers.push({ path, colour });
+			}
+		}
+	}
 
-  // Cube outlines for crisp edges
-  const outlines = {
-    front: [
-      [0, 0, 3],
-      [3, 0, 3],
-      [3, 3, 3],
-      [0, 3, 3],
-    ],
-    right: [
-      [3, 0, 0],
-      [3, 0, 3],
-      [3, 3, 3],
-      [3, 3, 0],
-    ],
-    top: [
-      [0, 0, 0],
-      [3, 0, 0],
-      [3, 0, 3],
-      [0, 0, 3],
-    ],
-  };
+	// Cube outlines for crisp edges
+	const outlines = {
+		front: [
+			[0, 0, 3],
+			[3, 0, 3],
+			[3, 3, 3],
+			[0, 3, 3],
+		],
+		right: [
+			[3, 0, 0],
+			[3, 0, 3],
+			[3, 3, 3],
+			[3, 3, 0],
+		],
+		top: [
+			[0, 0, 0],
+			[3, 0, 0],
+			[3, 0, 3],
+			[0, 0, 3],
+		],
+	};
 
-  const outlineSVG = Object.values(outlines)
-    .map((poly) => {
-      const d =
-        poly
-          .map((p, i) => {
-            const [sx, sy] = project(p, cubeOrigin);
-            return `${i ? "L" : "M"} ${sx.toFixed(1)},${sy.toFixed(1)}`;
-          })
-          .join(" ") + " Z";
-      return `<path d="${d}" fill="none" stroke="#191919" stroke-width="3"/>`;
-    })
-    .join("\n  ");
+	const outlineSVG = Object.values(outlines)
+		.map((poly) => {
+			const d = `${poly
+				.map((p, i) => {
+					const [sx, sy] = project(p, cubeOrigin);
+					return `${i ? "L" : "M"} ${sx.toFixed(1)},${sy.toFixed(1)}`;
+				})
+				.join(" ")} Z`;
+			return `<path d="${d}" fill="none" stroke="#191919" stroke-width="3"/>`;
+		})
+		.join("\n  ");
 
-  // Drop shadow for the cube
-  const shadowY = cubeOrigin[1] + cubeHeight + 12;
-  const shadowRX = 3 * COS * CELL * 0.9;
+	// Drop shadow for the cube
+	const shadowY = cubeOrigin[1] + cubeHeight + 12;
+	const shadowRX = 3 * COS * CELL * 0.9;
 
-  // Text content positioning
-  const textX = 350;
-  const titleY = 200;
-  const subtitleY = 280;
-  const featuresY = 360;
+	// Text content positioning
+	const textX = 350;
+	const titleY = 200;
+	const subtitleY = 280;
+	const featuresY = 360;
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
+	return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${OG_WIDTH}" height="${OG_HEIGHT}" viewBox="0 0 ${OG_WIDTH} ${OG_HEIGHT}"
      xmlns="http://www.w3.org/2000/svg">
 
@@ -170,11 +168,10 @@ function generateOGImageSVG() {
 
   <!-- Cube stickers -->
   ${stickers
-    .map(
-      ({ path, colour }) =>
-        `<path d="${path}" fill="${colour}" stroke="#191919" stroke-width="2"/>`,
-    )
-    .join("\n  ")}
+		.map(
+			({ path, colour }) => `<path d="${path}" fill="${colour}" stroke="#191919" stroke-width="2"/>`
+		)
+		.join("\n  ")}
 
   <!-- Cube outlines -->
   ${outlineSVG}
@@ -235,32 +232,30 @@ function generateOGImageSVG() {
 // Generate and save OG image
 // -----------------------------------------------------------------------------
 async function generateOGImage() {
-  const svg = generateOGImageSVG();
+	const svg = generateOGImageSVG();
 
-  // Save SVG version
-  const svgPath = path.join(__dirname, "public", "og-image.svg");
-  fs.writeFileSync(svgPath, svg);
-  console.log("✓ og-image.svg generated");
+	// Save SVG version
+	const svgPath = path.join(__dirname, "public", "og-image.svg");
+	fs.writeFileSync(svgPath, svg);
+	console.log("✓ og-image.svg generated");
 
-  // Generate PNG version
-  const pngPath = path.join(__dirname, "public", "og-image.png");
-  await sharp(Buffer.from(svg))
-    .png({ quality: 95, compressionLevel: 6 })
-    .toFile(pngPath);
-  console.log("✓ og-image.png generated");
+	// Generate PNG version
+	const pngPath = path.join(__dirname, "public", "og-image.png");
+	await sharp(Buffer.from(svg)).png({ quality: 95, compressionLevel: 6 }).toFile(pngPath);
+	console.log("✓ og-image.png generated");
 
-  // Generate WebP version for better compression
-  const webpPath = path.join(__dirname, "public", "og-image.webp");
-  await sharp(Buffer.from(svg)).webp({ quality: 90 }).toFile(webpPath);
-  console.log("✓ og-image.webp generated");
+	// Generate WebP version for better compression
+	const webpPath = path.join(__dirname, "public", "og-image.webp");
+	await sharp(Buffer.from(svg)).webp({ quality: 90 }).toFile(webpPath);
+	console.log("✓ og-image.webp generated");
 
-  console.log("\n🎉 OG image generated successfully!");
-  console.log(`   Dimensions: ${OG_WIDTH}x${OG_HEIGHT}`);
-  console.log("   Perfect for social media sharing!");
+	console.log("\n🎉 OG image generated successfully!");
+	console.log(`   Dimensions: ${OG_WIDTH}x${OG_HEIGHT}`);
+	console.log("   Perfect for social media sharing!");
 }
 
 // Run the generator
 generateOGImage().catch((err) => {
-  console.error("Error generating OG image:", err);
-  process.exit(1);
+	console.error("Error generating OG image:", err);
+	process.exit(1);
 });

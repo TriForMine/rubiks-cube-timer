@@ -73,14 +73,8 @@ coverage/
 next-env.d.ts
 .tscache/
 
-# ESLint
-.eslintcache
-
 # Optional npm cache directory
 .npm
-
-# Optional eslint cache
-.eslintcache
 
 # Microbundle cache
 .rpt2_cache/

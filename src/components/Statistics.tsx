@@ -565,7 +565,7 @@ export function Statistics({ times }: StatisticsProps) {
                     url =
                       "https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/";
                   } else if (["Novice", "Casual"].includes(level)) {
-                    url = "https://jperm.net/3x3/beginner";
+                    url = "https://jperm.net/3x3";
                   } else {
                     url = "https://jperm.net/3x3/cfop";
                   }

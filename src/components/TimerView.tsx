@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, memo, useMemo } from "react";
 import { ScrambleDisplay } from "@/components/ScrambleDisplay";
+import { FloatingCubeButton } from "@/components/FloatingCubeButton";
 import { generateScramble } from "@/lib/scramble";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Square, Sparkles } from "lucide-react";
@@ -549,6 +550,9 @@ function TimerViewComponent({
           </div>
         </div>
       </div>
+
+      {/* Floating Cube Visualization Button */}
+      <FloatingCubeButton scramble={currentScramble} />
     </div>
   );
 }

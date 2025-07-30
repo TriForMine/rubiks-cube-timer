@@ -343,14 +343,14 @@ export function TimesList({
                     </div>
                   )}
 
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <div className="inline-flex items-center justify-center h-8 w-8">
                     <ChevronDown
                       className={cn(
                         "w-4 h-4 transition-transform duration-200",
                         expandedTime === time.id && "rotate-180",
                       )}
                     />
-                  </Button>
+                  </div>
                 </div>
               </button>
 

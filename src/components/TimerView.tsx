@@ -171,6 +171,8 @@ function TimerViewComponent({
   const [lastSolveTime, setLastSolveTime] = useState<number | null>(null);
   const [wasLastSolvePB, setWasLastSolvePB] = useState(false);
   const [finalTime, setFinalTime] = useState(0);
+  const [completedTimeRecord, setCompletedTimeRecord] =
+    useState<TimeRecord | null>(null);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -232,14 +234,6 @@ function TimerViewComponent({
         millisecondsDisplayRef.current.textContent = `.${milliseconds}`;
       }
 
-      // Add time to records
-      const newTime: TimeRecord = {
-        id: Date.now().toString(),
-        time: completedTime,
-        scramble: currentScrambleRef.current,
-        date: new Date(),
-      };
-
       // Check if this is a PB
       const validTimes = existingTimesRef.current.filter(
         (t) => t.penalty !== "DNF",
@@ -255,16 +249,21 @@ function TimerViewComponent({
 
       setWasLastSolvePB(completedTime < currentBestTime);
 
-      onTimeAdded(newTime);
+      // Create time record to be processed in useEffect
+      const newTime: TimeRecord = {
+        id: Date.now().toString(),
+        time: completedTime,
+        scramble: currentScrambleRef.current,
+        date: new Date(),
+      };
 
-      // Generate new scramble for next solve
-      const newScramble = generateScramble(scrambleLength);
-      onScrambleChange(newScramble);
+      // Store the completed time record to be processed in useEffect
+      setCompletedTimeRecord(newTime);
     }
 
     setIsRunning(false);
     startTimeRef.current = null;
-  }, [onTimeAdded, onScrambleChange, scrambleLength]);
+  }, []);
 
   const resetTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -292,6 +291,21 @@ function TimerViewComponent({
       onScrambleChange(newScramble);
     }
   }, [isRunning, onScrambleChange, scrambleLength]);
+
+  // Process completed time in useEffect to avoid state updates during render
+  useEffect(() => {
+    if (completedTimeRecord) {
+      // Add the time to records
+      onTimeAdded(completedTimeRecord);
+
+      // Generate new scramble for next solve
+      const newScramble = generateScramble(scrambleLength);
+      onScrambleChange(newScramble);
+
+      // Reset the completed time record
+      setCompletedTimeRecord(null);
+    }
+  }, [completedTimeRecord, onTimeAdded, onScrambleChange, scrambleLength]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

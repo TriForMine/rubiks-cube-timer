@@ -314,12 +314,14 @@ export class Cube3DRenderer {
       const newAngle = targetAngle * eased;
       const delta = newAngle - this.animationState.angle;
 
-      const rotM = new Matrix4().makeRotationAxis(axis, delta);
-      this.animationState.affectedPieces.forEach((pc) => {
-        pc.mesh.position.applyMatrix4(rotM);
-        pc.mesh.rotateOnAxis(axis, delta);
-      });
-      this.animationState.angle = newAngle;
+      if (delta !== 0) {
+        const rotM = new Matrix4().makeRotationAxis(axis, delta);
+        this.animationState.affectedPieces.forEach((pc) => {
+          pc.mesh.position.applyMatrix4(rotM);
+          pc.mesh.rotateOnAxis(axis, delta);
+        });
+        this.animationState.angle = newAngle;
+      }
 
       if (t === 1) {
         const cb = this.animationState.onComplete;
@@ -340,7 +342,9 @@ export class Cube3DRenderer {
   /** Animate one Singmaster move (e.g. "R", "U'", "F2") */
   public animateMove(move: string, duration = 400): Promise<void> {
     return new Promise((res) => {
-      if (this.animationState) return res(); // ignore if busy
+      if (this.animationState) {
+        return res(); // ignore if busy
+      }
 
       const face = move[0].toUpperCase() as keyof CubeState;
       const mod = move.slice(1);
@@ -349,6 +353,7 @@ export class Cube3DRenderer {
       const angle = (dir * turns * Math.PI) / 2;
 
       const { normal, pieces } = this.faceMapping[face];
+
       this.animationState = {
         axis: normal.clone(),
         angle: 0,
@@ -467,14 +472,8 @@ export class Cube3DRenderer {
         });
 
         // Clear mesh references
-        Object.defineProperty(p.mesh, "material", {
-          value: null,
-          writable: true,
-        });
-        Object.defineProperty(p.mesh, "geometry", {
-          value: null,
-          writable: true,
-        });
+        (p.mesh as any).material = null;
+        (p.mesh as any).geometry = null;
       } catch (error) {
         console.warn("Error disposing piece:", error);
       }

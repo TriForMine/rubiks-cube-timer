@@ -152,9 +152,12 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
     canvas.width = width;
     canvas.height = height;
 
-    const initialState = scramble
-      ? applyScramble(scramble)
-      : createSolvedCube();
+    // Always start with solved cube for step-by-step mode
+    const initialState = stepByStep
+      ? createSolvedCube()
+      : scramble
+        ? applyScramble(scramble)
+        : createSolvedCube();
 
     if (!initialState) {
       console.warn("Failed to create initial cube state");
@@ -212,29 +215,33 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
 
   // Initialize WASM cube state for step-by-step
   useEffect(() => {
-    if (!wasmReady || !stepByStep || !isInitializedRef.current) return;
+    if (!wasmReady || !stepByStep) return;
 
-    const cube = WasmCube.solved();
-    setWasmCubeState(cube);
-    lastProcessedStepRef.current = -1;
+    try {
+      const cube = WasmCube.solved();
+      setWasmCubeState(cube);
+      lastProcessedStepRef.current = -1;
+    } catch (error) {
+      console.error("Failed to create WASM cube:", error);
+    }
   }, [wasmReady, stepByStep]);
 
   // Handle step-by-step progression using useCallback to avoid dependency issues
   const updateToStep = useCallback(
-    async (targetStep: number, moves: string[]) => {
+    async (targetStep: number) => {
       if (
         !rendererRef.current ||
-        isAnimating ||
         !wasmCubeState ||
-        !isInitializedRef.current
-      )
+        isAnimating ||
+        !isInitializedRef.current ||
+        targetStep === previousStep
+      ) {
         return;
-
-      // Avoid processing the same step multiple times
-      if (lastProcessedStepRef.current === targetStep) return;
+      }
 
       try {
-        const stepDifference = Math.abs(targetStep - previousStep);
+        const moves = currentScramble.trim().split(/\s+/).filter(Boolean);
+        const stepDifference = targetStep - previousStep;
 
         if (targetStep === 0) {
           // Reset to solved state
@@ -301,10 +308,14 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
         } else {
           // Multi-step jump or backward movement - rebuild state instantly
           const newCube = WasmCube.solved();
-          const movesToApply = moves.slice(0, targetStep);
 
-          for (const move of movesToApply) {
-            newCube.applyMove(move);
+          // Apply moves up to the target step
+          for (let i = 0; i < targetStep && i < moves.length; i++) {
+            try {
+              newCube.applyMove(moves[i]);
+            } catch (error) {
+              console.warn(`Error applying move ${moves[i]}:`, error);
+            }
           }
 
           setWasmCubeState(newCube);
@@ -326,7 +337,14 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
         setIsAnimating(false);
       }
     },
-    [isAnimating, wasmCubeState, previousStep, animationSpeed, onStepComplete],
+    [
+      isAnimating,
+      wasmCubeState,
+      previousStep,
+      animationSpeed,
+      onStepComplete,
+      currentScramble,
+    ],
   );
 
   // Handle step-by-step progression
@@ -336,12 +354,13 @@ export const Cube3DViewer: React.FC<Cube3DViewerProps> = ({
       !rendererRef.current ||
       !scramble ||
       !wasmCubeState ||
-      !isInitializedRef.current
-    )
+      !isInitializedRef.current ||
+      lastProcessedStepRef.current === currentStep
+    ) {
       return;
+    }
 
-    const moves = scramble.trim().split(/\s+/).filter(Boolean);
-    updateToStep(currentStep, moves);
+    updateToStep(currentStep);
   }, [stepByStep, currentStep, scramble, wasmCubeState, updateToStep]);
 
   // Handle scramble changes for non-step-by-step mode

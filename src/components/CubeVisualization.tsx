@@ -1,15 +1,15 @@
 "use client";
 
-import { CubeColor, type CubeState, getBgClass } from "@/lib/cube-simulation";
+import { CubeColor, getBgClass, type WasmCube } from "@/lib/cube-wasm";
 import { cn } from "@/lib/utils";
 
 interface CubeVisualizationProps {
-	cubeState: CubeState;
+	cubeState: WasmCube;
 	className?: string;
 }
 
 interface FaceProps {
-	face: Uint8Array & { length: 9 };
+	face: Uint8Array;
 	faceName: string;
 	className?: string;
 }
@@ -43,20 +43,20 @@ export function CubeVisualization({ cubeState, className }: CubeVisualizationPro
 				<div className="flex flex-col items-center space-y-4 gap-4 p-6 bg-gray-50 dark:bg-gray-900 rounded-lg">
 					{/* Top row - Up face only */}
 					<div className="flex justify-center">
-						<Face face={cubeState.U} faceName="Up" className="w-16 h-16" />
+						<Face face={cubeState.U as Uint8Array} faceName="Up" className="w-16 h-16" />
 					</div>
 
 					{/* Middle row - Left, Front, Right, Back */}
 					<div className="flex gap-4">
-						<Face face={cubeState.L} faceName="Left" className="w-16 h-16" />
-						<Face face={cubeState.F} faceName="Front" className="w-16 h-16" />
-						<Face face={cubeState.R} faceName="Right" className="w-16 h-16" />
-						<Face face={cubeState.B} faceName="Back" className="w-16 h-16" />
+						<Face face={cubeState.L as Uint8Array} faceName="Left" className="w-16 h-16" />
+						<Face face={cubeState.F as Uint8Array} faceName="Front" className="w-16 h-16" />
+						<Face face={cubeState.R as Uint8Array} faceName="Right" className="w-16 h-16" />
+						<Face face={cubeState.B as Uint8Array} faceName="Back" className="w-16 h-16" />
 					</div>
 
 					{/* Bottom row - Down face only */}
 					<div className="flex justify-center">
-						<Face face={cubeState.D} faceName="Down" className="w-16 h-16" />
+						<Face face={cubeState.D as Uint8Array} faceName="Down" className="w-16 h-16" />
 					</div>
 				</div>
 			</div>

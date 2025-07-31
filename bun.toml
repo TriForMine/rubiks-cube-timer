@@ -1,0 +1,75 @@
+[project]
+name = "rubiks-cube-timer"
+version = "0.1.0"
+description = "High-performance Rubik's Cube timer with WASM simulation"
+author = "TriForMine"
+license = "Apache-2.0"
+repository = "https://github.com/TriForMine/rubiks-cube-timer"
+
+[build]
+# Enable TypeScript support
+typescript = true
+# Enable JSX support if needed
+jsx = "react-jsx"
+# Target modern browsers
+target = "esnext"
+# Enable source maps for debugging
+sourcemap = true
+# Optimize for performance
+minify = true
+
+[install]
+# Use exact versions for reproducible builds
+exact = true
+# Cache packages for faster installs
+cache = true
+# Auto-install peer dependencies
+auto = true
+
+[dev]
+# Hot reload for development
+hot = true
+# Watch for file changes
+watch = true
+# Enable debug mode
+debug = false
+
+[test]
+# Test configuration
+timeout = 30000
+coverage = true
+# Include WASM tests
+include = ["**/*.test.ts", "**/tests/**/*.ts", "cube-wasm/**/*.rs"]
+
+[bundler]
+# Enable tree shaking
+treeshaking = true
+# Code splitting
+splitting = true
+# Enable WASM support
+wasm = true
+# Target web browsers
+platform = "browser"
+
+[workspace]
+# Enable workspace support for WASM subproject
+members = ["cube-wasm"]
+
+[env]
+# Environment variables
+NODE_ENV = "development"
+RUST_LOG = "info"
+WASM_BINDGEN_LOG = "info"
+
+[scripts]
+# Common scripts
+build-wasm = "bun run scripts/build-wasm.ts"
+build-wasm-dev = "bun run scripts/build-wasm.ts --dev"
+build-wasm-prod = "bun run scripts/build-wasm.ts --optimize"
+test-wasm = "bun run scripts/build-wasm.ts --test"
+clean-wasm = "bun run scripts/build-wasm.ts --clean"
+setup-wasm = "cargo install wasm-bindgen-cli && rustup target add wasm32-unknown-unknown"
+
+[dependencies]
+# WASM-related dependencies will be handled by the build script
+# Prerequisites: cargo install wasm-bindgen-cli && rustup target add wasm32-unknown-unknown

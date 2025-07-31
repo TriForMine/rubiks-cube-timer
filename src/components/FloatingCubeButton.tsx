@@ -1,10 +1,10 @@
 "use client";
 
 import { Grid3x3, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CubeVisualization } from "@/components/CubeVisualization";
 import { Button } from "@/components/ui/button";
-import { applyScramble } from "@/lib/cube-simulation";
+import { initWasm, isWasmInitialized, WasmCube } from "@/lib/cube-wasm";
 import { cn } from "@/lib/utils";
 
 interface FloatingCubeButtonProps {
@@ -15,6 +15,8 @@ interface FloatingCubeButtonProps {
 export function FloatingCubeButton({ scramble, className }: FloatingCubeButtonProps) {
 	const [isVisible, setIsVisible] = useState(false);
 	const [isInitialMount, setIsInitialMount] = useState(true);
+	const [wasmReady, setWasmReady] = useState(false);
+	const [scrambledCubeState, setScrambledCubeState] = useState<WasmCube | null>(null);
 
 	// Load visibility state from localStorage on mount
 	useEffect(() => {
@@ -42,10 +44,36 @@ export function FloatingCubeButton({ scramble, className }: FloatingCubeButtonPr
 		}
 	}, [isVisible, isInitialMount]);
 
-	// Calculate the cube state after applying the scramble
-	const scrambledCubeState = useMemo(() => {
-		return applyScramble(scramble);
-	}, [scramble]);
+	// Initialize WASM
+	useEffect(() => {
+		const initializeWasm = async () => {
+			if (!isWasmInitialized()) {
+				try {
+					await initWasm();
+				} catch (error) {
+					console.error("Failed to initialize WASM:", error);
+					return;
+				}
+			}
+			setWasmReady(true);
+		};
+
+		initializeWasm();
+	}, []);
+
+	// Update cube state when WASM is ready or scramble changes
+	useEffect(() => {
+		if (!wasmReady) return;
+
+		try {
+			const cube = WasmCube.solved();
+			cube.applyScramble(scramble);
+			setScrambledCubeState(cube);
+		} catch (error) {
+			console.warn("Error applying scramble:", error);
+			setScrambledCubeState(null);
+		}
+	}, [scramble, wasmReady]);
 
 	return (
 		<>
@@ -69,10 +97,18 @@ export function FloatingCubeButton({ scramble, className }: FloatingCubeButtonPr
 			{/* Cube Visualization */}
 			{isVisible && (
 				<div className="fixed bottom-20 right-20 z-40 animate-in slide-in-from-bottom-2 fade-in-0 duration-200">
-					<CubeVisualization
-						cubeState={scrambledCubeState}
-						className="scale-90 origin-bottom-right shadow-xl"
-					/>
+					{scrambledCubeState ? (
+						<CubeVisualization
+							cubeState={scrambledCubeState}
+							className="scale-90 origin-bottom-right shadow-xl"
+						/>
+					) : (
+						<div className="scale-90 origin-bottom-right shadow-xl bg-gray-100 dark:bg-gray-800 p-6 rounded-lg">
+							<div className="flex items-center justify-center h-32 w-64 text-muted-foreground">
+								{wasmReady ? "Loading cube state..." : "Initializing WASM..."}
+							</div>
+						</div>
+					)}
 				</div>
 			)}
 		</>

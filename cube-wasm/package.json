@@ -1,0 +1,45 @@
+{
+	"name": "cube-wasm",
+	"version": "0.1.0",
+	"description": "High-performance Rubik's Cube simulation in Rust/WASM",
+	"main": "pkg-bundler/cube_wasm.js",
+	"types": "pkg-bundler/cube_wasm.d.ts",
+	"files": [
+		"pkg-bundler"
+	],
+	"scripts": {
+		"build": "cargo build --target wasm32-unknown-unknown --release && wasm-bindgen target/wasm32-unknown-unknown/release/cube_wasm.wasm --out-dir pkg-bundler --target bundler",
+		"dev": "cargo build --target wasm32-unknown-unknown && wasm-bindgen target/wasm32-unknown-unknown/debug/cube_wasm.wasm --out-dir pkg-bundler --target bundler --debug",
+		"test": "cargo test",
+		"clean": "rm -rf pkg pkg-node pkg-bundler target || rmdir /s /q pkg pkg-node pkg-bundler target 2>nul"
+	},
+	"devDependencies": {
+		"typescript": "^5.0.0",
+		"@types/node": "^20.0.0"
+	},
+	"keywords": [
+		"rubiks-cube",
+		"cube",
+		"simulation",
+		"wasm",
+		"rust",
+		"webassembly",
+		"3x3x3",
+		"solver",
+		"bun",
+		"typescript"
+	],
+	"author": "TriForMine",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/TriForMine/rubiks-cube-timer"
+	},
+	"homepage": "https://github.com/TriForMine/rubiks-cube-timer",
+	"bugs": {
+		"url": "https://github.com/TriForMine/rubiks-cube-timer/issues"
+	},
+	"engines": {
+		"bun": ">=1.0.0"
+	}
+}

@@ -35,10 +35,27 @@ const nextConfig: NextConfig = {
 	},
 
 	// Webpack configuration fallback
-	webpack: (config, { dev }) => {
+	webpack: (config, { dev, isServer }) => {
 		// Skip webpack modifications in development with Turbopack
 		if (dev && process.env.TURBOPACK) {
 			return config;
+		}
+
+		// Enable WASM support only for client-side
+		if (!isServer) {
+			config.experiments = {
+				...config.experiments,
+				asyncWebAssembly: true,
+			};
+
+			// Handle WASM files
+			config.module.rules.push({
+				test: /\.wasm$/,
+				type: "webassembly/async",
+			});
+
+			// Set target to support async/await for WASM
+			config.target = ["web", "es2017"];
 		}
 
 		// Add fallbacks for Node.js modules
@@ -48,6 +65,14 @@ const nextConfig: NextConfig = {
 			net: false,
 			tls: false,
 		};
+
+		// Exclude WASM from server-side bundling
+		if (isServer) {
+			config.externals = config.externals || [];
+			config.externals.push({
+				"../../cube-wasm/pkg-bundler/cube_wasm": "commonjs ../../cube-wasm/pkg-bundler/cube_wasm",
+			});
+		}
 
 		return config;
 	},

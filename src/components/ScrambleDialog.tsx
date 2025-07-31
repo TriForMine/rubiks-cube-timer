@@ -1,7 +1,7 @@
 "use client";
 
 import { Copy, Eye, Play, RefreshCw, Shuffle } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CubeVisualization } from "@/components/CubeVisualization";
 import { ScrambleStepByStep } from "@/components/ScrambleStepByStep";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { applyScramble } from "@/lib/cube-simulation";
+import { initWasm, isWasmInitialized, WasmCube } from "@/lib/cube-wasm";
 import { cn } from "@/lib/utils";
 
 interface ScrambleDialogProps {
@@ -25,6 +25,8 @@ export function ScrambleDialog({ scramble, onNewScramble, children }: ScrambleDi
 	const [isOpen, setIsOpen] = useState(false);
 	const [copied, setCopied] = useState(false);
 	const [viewMode, setViewMode] = useState<"static" | "stepByStep">("static");
+	const [wasmReady, setWasmReady] = useState(false);
+	const [scrambledCubeState, setScrambledCubeState] = useState<WasmCube | null>(null);
 
 	const handleCopy = async () => {
 		try {
@@ -38,10 +40,36 @@ export function ScrambleDialog({ scramble, onNewScramble, children }: ScrambleDi
 
 	const scrambleMoves = scramble.split(" ");
 
-	// Calculate the cube state after applying the scramble
-	const scrambledCubeState = useMemo(() => {
-		return applyScramble(scramble);
-	}, [scramble]);
+	// Initialize WASM and set up cube state
+	useEffect(() => {
+		const initializeWasm = async () => {
+			if (!isWasmInitialized()) {
+				try {
+					await initWasm();
+				} catch (error) {
+					console.error("Failed to initialize WASM:", error);
+					return;
+				}
+			}
+			setWasmReady(true);
+		};
+
+		initializeWasm();
+	}, []);
+
+	// Update cube state when WASM is ready or scramble changes
+	useEffect(() => {
+		if (!wasmReady) return;
+
+		try {
+			const cube = WasmCube.solved();
+			cube.applyScramble(scramble);
+			setScrambledCubeState(cube);
+		} catch (error) {
+			console.warn("Error applying scramble:", error);
+			setScrambledCubeState(null);
+		}
+	}, [scramble, wasmReady]);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -86,7 +114,13 @@ export function ScrambleDialog({ scramble, onNewScramble, children }: ScrambleDi
 					{/* Cube Visualization */}
 					{viewMode === "static" ? (
 						<div className="flex justify-center">
-							<CubeVisualization cubeState={scrambledCubeState} />
+							{scrambledCubeState ? (
+								<CubeVisualization cubeState={scrambledCubeState} />
+							) : (
+								<div className="flex items-center justify-center h-64 text-muted-foreground">
+									{wasmReady ? "Loading cube state..." : "Initializing WASM..."}
+								</div>
+							)}
 						</div>
 					) : (
 						<div className="px-4">

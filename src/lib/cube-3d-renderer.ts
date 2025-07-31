@@ -10,6 +10,7 @@
 import {
   AmbientLight,
   BoxGeometry,
+  CanvasTexture,
   Color,
   DirectionalLight,
   Group,
@@ -20,8 +21,78 @@ import {
   Scene,
   Vector3,
   WebGLRenderer,
+  type Material,
+  type Object3D,
+  type Texture,
 } from "three";
-import { applyMove, type CubeState, getDisplayHex } from "./cube-simulation";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import {
+  CubeColor,
+  getDisplayHex,
+  initWasm,
+  isWasmInitialized,
+  type WasmCube,
+} from "./cube-wasm";
+
+// Minimal interface for 3D renderer compatibility
+type Face = Uint8Array & { length: 9 };
+interface CubeState {
+  U: Face;
+  D: Face;
+  F: Face;
+  B: Face;
+  R: Face;
+  L: Face;
+}
+
+// Helper function to create CubeState from WasmCube
+function _wasmCubeToState(cube: WasmCube): CubeState {
+  return {
+    U: cube.U as Face,
+    D: cube.D as Face,
+    F: cube.F as Face,
+    B: cube.B as Face,
+    R: cube.R as Face,
+    L: cube.L as Face,
+  };
+}
+
+// Helper function to create a solved cube state
+function createSolvedState(): CubeState {
+  const makeFace = (c: CubeColor): Face =>
+    Uint8Array.from({ length: 9 }, () => c) as Face;
+
+  return {
+    U: makeFace(CubeColor.White),
+    D: makeFace(CubeColor.Yellow),
+    F: makeFace(CubeColor.Green),
+    B: makeFace(CubeColor.Blue),
+    R: makeFace(CubeColor.Red),
+    L: makeFace(CubeColor.Orange),
+  };
+}
+
+// Type for materials with disposable properties
+interface DisposableMaterial extends Material {
+  map?: Texture | null;
+  normalMap?: Texture | null;
+  bumpMap?: Texture | null;
+  roughnessMap?: Texture | null;
+  metalnessMap?: Texture | null;
+  emissiveMap?: Texture | null;
+  specularMap?: Texture | null;
+  envMap?: Texture | null;
+  lightMap?: Texture | null;
+  aoMap?: Texture | null;
+  alphaMap?: Texture | null;
+  displacementMap?: Texture | null;
+  gradientMap?: Texture | null;
+}
+
+// Type for objects with dispose method
+interface DisposableObject extends Object3D {
+  dispose?(): void;
+}
 
 /* ---------- Internal types ---------- */
 interface CubePiece {
@@ -39,7 +110,7 @@ interface AnimationState {
   affectedPieces: CubePiece[];
   onComplete?: () => void;
 }
-type FaceArr = Uint8Array & { length: 9 };
+// Removed unused type alias FaceArr
 
 /* ---------- Renderer class ---------- */
 export class Cube3DRenderer {
@@ -50,6 +121,8 @@ export class Cube3DRenderer {
   private pieces: CubePiece[] = [];
   private animationState: AnimationState | null = null;
   private cubeState: CubeState;
+  private showIndices: boolean = false;
+  private controls: OrbitControls | null = null;
 
   /* Outward normals for the six Singmaster faces */
   private faceMapping: Record<
@@ -75,8 +148,17 @@ export class Cube3DRenderer {
   } as const;
 
   /* ---------- ctor ---------- */
-  constructor(canvas: HTMLCanvasElement, initialState: CubeState) {
-    this.cubeState = this.cloneState(initialState);
+  constructor(canvas: HTMLCanvasElement, initialState?: CubeState) {
+    this.cubeState = initialState || createSolvedState();
+
+    // Initialize WASM if not already done
+    if (!isWasmInitialized()) {
+      initWasm().catch(() => {
+        console.warn(
+          "WASM initialization failed in 3D renderer - using fallback",
+        );
+      });
+    }
 
     /* Three.js bootstrap */
     this.scene = new Scene();
@@ -96,6 +178,7 @@ export class Cube3DRenderer {
     this.renderer.shadowMap.enabled = true;
 
     this.setupLighting();
+    this.setupControls();
 
     this.cubeGroup = new Group();
     this.scene.add(this.cubeGroup);
@@ -114,15 +197,15 @@ export class Cube3DRenderer {
     this.scene.add(dir);
   }
 
-  private cloneState(s: CubeState): CubeState {
-    return {
-      U: new Uint8Array(s.U) as FaceArr,
-      D: new Uint8Array(s.D) as FaceArr,
-      F: new Uint8Array(s.F) as FaceArr,
-      B: new Uint8Array(s.B) as FaceArr,
-      R: new Uint8Array(s.R) as FaceArr,
-      L: new Uint8Array(s.L) as FaceArr,
-    };
+  private setupControls() {
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.1;
+    this.controls.enableZoom = true;
+    this.controls.enablePan = true;
+    this.controls.enableRotate = true;
+    this.controls.minDistance = 2;
+    this.controls.maxDistance = 10;
   }
 
   /* ---------- Cube construction ---------- */
@@ -174,13 +257,23 @@ export class Cube3DRenderer {
 
     return faces.map(({ f, vis }) => {
       if (!vis) return new MeshLambertMaterial({ color: 0x000000 });
+
       const idx = this.faceIndex(pos, f);
       const col = this.cubeState[f][idx];
-      return new MeshLambertMaterial({ color: getDisplayHex(col) });
+
+      if (this.showIndices) {
+        // Create texture with index number overlay
+        const texture = this.createIndexTexture(idx, getDisplayHex(col));
+        return new MeshLambertMaterial({ map: texture });
+      } else {
+        return new MeshLambertMaterial({ color: getDisplayHex(col) });
+      }
     });
   }
 
   /* position → sticker index 0-8 for a face */
+  /* Layout: [0,1,2, 3,4,5, 6,7,8] corresponds to:
+   *         [top row, middle row, bottom row] */
   private faceIndex(p: Vector3, f: keyof CubeState): number {
     const { x, y, z } = p;
     switch (f) {
@@ -188,7 +281,6 @@ export class Cube3DRenderer {
         return (1 - y) * 3 + (x + 1);
       case "B":
         return (1 - y) * 3 + (1 - x);
-      /* ⬇️  corrected rows for U & D */
       case "U":
         return (z + 1) * 3 + (x + 1); // row 0 = back edge (z = -1)
       case "D":
@@ -236,11 +328,12 @@ export class Cube3DRenderer {
       }
     }
 
+    this.controls?.update();
     this.renderer.render(this.scene, this.camera);
   };
 
   private easeInOutQuart(t: number) {
-    return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+    return t < 0.5 ? 8 * t * t * t * t : 1 - (-2 * t + 2) ** 4 / 2;
   }
 
   /* ---------- Public API ---------- */
@@ -264,8 +357,7 @@ export class Cube3DRenderer {
         startTime: Date.now(),
         affectedPieces: [...pieces],
         onComplete: () => {
-          this.updateCubeState(move);
-          this.buildCube(); // rebuild with new sticker colours
+          // State is now managed externally, just complete the animation
           res();
         },
       };
@@ -283,7 +375,14 @@ export class Cube3DRenderer {
 
   /** Replace logical state & rebuild cube visuals */
   public updateState(state: CubeState) {
-    this.cubeState = this.cloneState(state);
+    this.cubeState = {
+      U: new Uint8Array(state.U) as Face,
+      D: new Uint8Array(state.D) as Face,
+      F: new Uint8Array(state.F) as Face,
+      B: new Uint8Array(state.B) as Face,
+      R: new Uint8Array(state.R) as Face,
+      L: new Uint8Array(state.L) as Face,
+    };
     this.buildCube();
   }
 
@@ -304,20 +403,175 @@ export class Cube3DRenderer {
     };
   }
   public dispose() {
+    // Stop the animation loop immediately
+    this.animationState = null;
+
+    // Force immediate context loss to free GPU resources
+    try {
+      const gl = this.renderer.getContext();
+      const loseContext = gl?.getExtension?.("WEBGL_lose_context");
+      loseContext?.loseContext();
+    } catch (error) {
+      console.warn("Could not force WebGL context loss:", error);
+    }
+
+    // Dispose of all piece geometries and materials aggressively
     this.pieces.forEach((p) => {
-      p.mesh.geometry.dispose();
-      (Array.isArray(p.mesh.material)
-        ? p.mesh.material
-        : [p.mesh.material]
-      ).forEach((m) => m.dispose());
+      try {
+        // Remove from scene first
+        this.cubeGroup.remove(p.mesh);
+
+        // Dispose geometry
+        if (p.mesh.geometry) {
+          p.mesh.geometry.dispose();
+        }
+
+        // Dispose materials (handle both single material and array)
+        const materials = Array.isArray(p.mesh.material)
+          ? p.mesh.material
+          : [p.mesh.material];
+        materials.forEach((m) => {
+          if (!m) return;
+
+          // Dispose all possible textures
+          const textureProperties = [
+            "map",
+            "normalMap",
+            "bumpMap",
+            "roughnessMap",
+            "metalnessMap",
+            "emissiveMap",
+            "specularMap",
+            "envMap",
+            "lightMap",
+            "aoMap",
+            "alphaMap",
+            "displacementMap",
+            "gradientMap",
+          ];
+
+          textureProperties.forEach((prop) => {
+            const material = m as DisposableMaterial;
+            const texture = material[
+              prop as keyof DisposableMaterial
+            ] as Texture | null;
+            if (texture && typeof texture.dispose === "function") {
+              texture.dispose();
+              (material as unknown as Record<string, Texture | null>)[prop] =
+                null;
+            }
+          });
+
+          // Dispose the material itself
+          m.dispose();
+        });
+
+        // Clear mesh references
+        Object.defineProperty(p.mesh, "material", {
+          value: null,
+          writable: true,
+        });
+        Object.defineProperty(p.mesh, "geometry", {
+          value: null,
+          writable: true,
+        });
+      } catch (error) {
+        console.warn("Error disposing piece:", error);
+      }
     });
-    this.renderer.dispose();
+
+    // Clear pieces array
+    this.pieces.length = 0;
+
+    // Remove cube group from scene and dispose
+    try {
+      this.scene.remove(this.cubeGroup);
+      this.cubeGroup.clear();
+    } catch (error) {
+      console.warn("Error removing cube group:", error);
+    }
+
+    // Dispose controls
+    if (this.controls) {
+      this.controls.dispose();
+      this.controls = null;
+    }
+
+    // Force context loss and dispose renderer
+    try {
+      this.renderer.forceContextLoss();
+      this.renderer.dispose();
+    } catch (error) {
+      console.warn("Error disposing renderer:", error);
+    }
+
+    // Clear scene completely
+    try {
+      this.scene.clear();
+      // Dispose scene children recursively
+      while (this.scene.children.length > 0) {
+        const child = this.scene.children[0];
+        this.scene.remove(child);
+        const disposableChild = child as DisposableObject;
+        if (disposableChild.dispose) {
+          disposableChild.dispose();
+        }
+      }
+    } catch (error) {
+      console.warn("Error clearing scene:", error);
+    }
+  }
+
+  /* ---------- Index texture creation ---------- */
+  private createIndexTexture(index: number, baseColor: string): CanvasTexture {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Could not get 2D context");
+
+    // Fill with base color
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, 64, 64);
+
+    // Add index text
+    ctx.fillStyle = this.getContrastColor(baseColor);
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(index.toString(), 32, 32);
+
+    // Add border
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, 62, 62);
+
+    return new CanvasTexture(canvas);
+  }
+
+  private getContrastColor(hex: string): string {
+    // Convert hex to RGB and determine if we need black or white text
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128 ? "#000000" : "#FFFFFF";
+  }
+
+  /* ---------- Public UV mapping controls ---------- */
+  public toggleIndexDisplay(): void {
+    this.showIndices = !this.showIndices;
+    this.buildCube(); // Rebuild with/without indices
+  }
+
+  public setIndexDisplay(show: boolean): void {
+    this.showIndices = show;
+    this.buildCube(); // Rebuild with/without indices
+  }
+
+  public isShowingIndices(): boolean {
+    return this.showIndices;
   }
 
   /* ---------- internal ---------- */
-  private updateCubeState(move: string) {
-    const s = this.cloneState(this.cubeState);
-    applyMove(s, move);
-    this.cubeState = s;
-  }
 }

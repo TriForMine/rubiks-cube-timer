@@ -1,0 +1,42 @@
+[package]
+name = "cube-wasm"
+version = "0.1.0"
+edition = "2021"
+authors = ["TriForMine <your-email@example.com>"]
+license = "Apache-2.0"
+description = "High-performance Rubik's Cube simulation in Rust/WASM"
+repository = "https://github.com/TriForMine/rubiks-cube-timer"
+homepage = "https://github.com/TriForMine/rubiks-cube-timer"
+documentation = "https://github.com/TriForMine/rubiks-cube-timer"
+keywords = ["rubiks-cube", "cube", "simulation", "wasm", "solver"]
+categories = ["games", "simulation", "wasm"]
+readme = "README.md"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+js-sys = "0.3"
+
+[dependencies.web-sys]
+version = "0.3"
+features = ["console", "Performance", "Window"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies.console_error_panic_hook]
+version = "0.1.7"
+optional = true
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.release.package."*"]
+opt-level = 3

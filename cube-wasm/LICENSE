@@ -22,20 +22,19 @@
       "You" (or "Your") shall mean an individual or Legal Entity
       exercising permissions granted by this License.
 
-      "Source" shall mean the preferred form for making modifications,
+      "Source" form shall mean the preferred form for making modifications,
       including but not limited to software source code, documentation
       source, and configuration files.
 
-      "Object" shall mean any form resulting from mechanical
+      "Object" form shall mean any form resulting from mechanical
       transformation or translation of a Source form, including but
       not limited to compiled object code, generated documentation,
       and conversions to other media types.
 
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (which shall not include works that are not original works of
-      authorship as defined by this License).
+      "Work" shall mean the work of authorship covered by this License,
+      whether in Source or Object form, made available under the License,
+      as indicated by a copyright notice that is included in or attached
+      to the work. (See the Appendix below for an example.)
 
       "Derivative Works" shall mean any work, whether in Source or Object
       form, that is based upon (or derived from) the Work and for which the
@@ -66,10 +65,10 @@
    2. Grant of Copyright License. Subject to the terms and conditions of
       this License, each Contributor hereby grants to You a perpetual,
       worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to use, reproduce, modify, create derivative works of,
-      distribute, sublicense, and/or sell copies of the Work, and to permit
-      persons to whom the Work is furnished to do so, subject to the
-      following conditions:
+      copyright license to use, reproduce, modify, merge, publish,
+      distribute, sublicense, and/or sell copies of the Work, and to
+      permit persons to whom the Work is furnished to do so, subject to
+      the following conditions:
 
       The above copyright notice and this permission notice shall be
       included in all copies or substantial portions of the Work.
@@ -102,12 +101,12 @@
           stating that You changed the files; and
 
       (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
+          that You distribute, all copyright, trademark, patent,
+          attribution and other notices from the Source form of the Work,
           excluding those notices that do not pertain to any part of
           the Derivative Works; and
 
-      (d) If the Work includes a "NOTICE" file as part of its
+      (d) If the Work includes a "NOTICE" text file as part of its
           distribution, then any Derivative Works that You distribute must
           include a readable copy of the attribution notices contained
           within such NOTICE file, excluding those notices that do not
@@ -124,7 +123,7 @@
           that such additional attribution notices cannot be construed
           as modifying the License.
 
-      You may add Your own copyright notice to Your modifications and
+      You may add Your own copyright notice for Your modifications and
       may provide additional or different license terms and conditions
       for use, reproduction, or distribution of Your modifications, or
       for any such Derivative Works as a whole, provided Your use,
@@ -166,14 +165,16 @@
       other commercial damages or losses), even if such Contributor
       has been advised of the possibility of such damages.
 
-   9. Accepting Warranty or Support. Unless You explicitly state otherwise,
-      You do not accept support, warranty, indemnity, or other liability
-      obligations and/or rights consistent with this License. However, You
-      may accept such obligations on Your own behalf and on Your sole
-      responsibility, not on behalf of any other Contributor, and only if You
-      agree to indemnify, defend, and hold each Contributor harmless for any
-      liability incurred by, or claims asserted against, such Contributor by
-      reason of your accepting any such warranty or support.
+   9. Accepting Warranty or Additional Liability. When redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
 
    END OF TERMS AND CONDITIONS
 
@@ -185,7 +186,7 @@
       the brackets!)  The text should be enclosed in the appropriate
       comment syntax for the file format. We also recommend that a
       file or class name and description of purpose be included on the
-      same "license" line as the copyright notice for easier
+      same "license header" that contains the copyright notice for easier
       identification within third-party archives.
 
    Copyright 2025 TriForMine

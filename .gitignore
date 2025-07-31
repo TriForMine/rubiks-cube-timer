@@ -193,11 +193,8 @@ pnpm-lock.yaml
 
 # WASM and Rust artifacts
 cube-wasm/target/
-cube-wasm/pkg/
 cube-wasm/pkg-node/
-cube-wasm/pkg-bundler/
 cube-wasm/Cargo.lock
-*.wasm
 **/*.rs.bk
 src/lib/wasm/
 

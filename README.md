@@ -115,6 +115,7 @@ bun run start
 - **Icons**: Lucide React
 - **Package Manager**: Bun
 - **Runtime**: React 19
+- **Performance**: Rust WebAssembly (WASM) for cube simulation
 
 ## Project Structure
 
@@ -134,13 +135,45 @@ src/
 │   │   └── badge.tsx
 │   ├── Timer.tsx            # Main timer display
 │   ├── ScrambleDisplay.tsx  # Scramble generator and display
+│   ├── Cube3DViewer.tsx     # 3D cube visualization
 │   ├── TimesList.tsx        # Solve history list
 │   ├── Statistics.tsx       # Statistics dashboard
 │   └── Settings.tsx         # Application settings
-└── lib/
-    ├── utils.ts             # Utility functions
-    └── scramble.ts          # Scramble generation logic
+├── lib/
+│   ├── utils.ts             # Utility functions
+│   ├── cube-wasm.ts         # WASM module interface
+│   ├── cube-3d-renderer.ts  # Three.js 3D renderer
+│   └── scramble.ts          # Scramble generation logic
+└── cube-wasm/               # Rust WASM module
+    ├── src/                 # Rust source code
+    ├── pkg/                 # Compiled WASM files (committed)
+    ├── Cargo.toml           # Rust package config
+    └── README.md            # WASM module documentation
 ```
+
+## High-Performance WASM Engine
+
+This application features a custom Rust WebAssembly module for optimal performance:
+
+### Key Benefits
+- **Blazing Fast**: Cube simulation runs at native speeds
+- **Zero-Copy Memory**: Direct memory access between JS and WASM
+- **WCA Compliance**: Official scramble generation algorithms
+- **Type Safety**: Full TypeScript integration with WASM bindings
+
+### WASM Module Features
+- **Optimized Algorithms**: Efficient cube state representation and move execution
+- **Smart Scrambling**: Prevents invalid move sequences and ensures proper randomization
+- **Memory Efficient**: Minimal memory footprint with zero-copy data access
+- **Cross-Platform**: Compiled WASM files work across all browsers and platforms
+
+### Why WASM Files Are Committed
+The compiled WASM files (`.wasm`, `.js`, `.d.ts`) are intentionally committed to the repository because:
+- **Deployment Compatibility**: Cloudflare Pages and similar platforms don't support Rust compilation
+- **Build Reliability**: Ensures consistent performance across all environments
+- **Zero Dependencies**: No need for Rust toolchain in production builds
+
+For more details, see the [WASM module documentation](./cube-wasm/README.md).
 
 ## Scramble Generation
 
@@ -150,6 +183,7 @@ The scramble generator creates WCA-compliant 3x3x3 cube scrambles:
 - **Valid Moves**: R, L, U, D, F, B with modifiers (', 2)
 - **Smart Algorithm**: Prevents invalid sequences and ensures randomness
 - **Visual Display**: Moves grouped for easy reading
+- **3D Visualization**: Optional step-by-step 3D cube preview
 
 ### Scramble Rules
 

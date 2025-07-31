@@ -6,9 +6,6 @@ Cargo.lock
 # WASM build outputs
 /pkg/
 /pkg-node/
-/pkg-bundler/
-*.wasm
-*.js.map
 
 # Node.js/Bun artifacts
 node_modules/

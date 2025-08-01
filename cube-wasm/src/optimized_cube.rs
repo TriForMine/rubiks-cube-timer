@@ -2,6 +2,9 @@
 // 54 stickers stored as u8 color values (0-5)
 // Face layout: U(0-8), D(9-17), F(18-26), B(27-35), R(36-44), L(45-53)
 // Each face uses standard 3x3 indexing: 0-2 top row, 3-5 middle, 6-8 bottom
+
+#[cfg(target_arch = "wasm32")]
+use js_sys;
 #[repr(C)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct OptimizedCube {
@@ -573,8 +576,33 @@ impl OptimizedCube {
     pub fn generate_random_scramble(length: usize) -> Vec<u8> {
         let mut moves = Vec::with_capacity(length);
 
-        // Use a simple LCG for cross-platform compatibility
-        static mut SEED: u64 = 12345;
+        static mut SEED: u64 = 0;
+        static mut INITIALIZED: bool = false;
+
+        // Initialize seed with random value on first use
+        unsafe {
+            if !INITIALIZED {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    SEED = (js_sys::Math::random() * (u64::MAX as f64)) as u64;
+                    if SEED == 0 {
+                        SEED = 12345;
+                    }
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    use std::time::{SystemTime, UNIX_EPOCH};
+                    SEED = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_nanos() as u64;
+                    if SEED == 0 {
+                        SEED = 12345;
+                    }
+                }
+                INITIALIZED = true;
+            }
+        }
 
         let mut attempts = 0;
         const MAX_ATTEMPTS: usize = 1000; // Prevent infinite loops

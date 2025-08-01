@@ -188,7 +188,7 @@ export default function Home() {
             .reduce((sum, time) => sum + time, 0) /
           times.filter((t) => t.penalty !== "DNF").length
         : null,
-    dailyProgress: streakData?.dailyProgress[0] || null,
+    dailyProgress: getCurrentStreakStatus().todayProgress,
     currentStreak: streakData?.currentStreak || 0,
   };
 

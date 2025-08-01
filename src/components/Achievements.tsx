@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Achievement } from "@/contexts/UserProgressContext";
 import { useUserProgress } from "@/contexts/UserProgressContext";
-import { getCurrentStreakStatus, getWeeklyProgress, loadDailySettings } from "@/lib/storage";
+import { getCurrentStreak, getDailyGoal, getDailyProgress } from "@/lib/tinybase-storage";
 import { cn } from "@/lib/utils";
 
 // Extended achievement type for internal use (includes criteria function)
@@ -170,8 +170,8 @@ const ACHIEVEMENTS: AchievementWithCriteria[] = [
 		description: "Complete your daily goal for the first time",
 		icon: <Target className="w-5 h-5 text-blue-500" />,
 		criteria: (_times: TimeRecord[]) => {
-			const weeklyProgress = getWeeklyProgress();
-			return weeklyProgress.some((day) => day.goalMet);
+			const weeklyProgress = getDailyProgress(7);
+			return weeklyProgress.some((day) => day.goal_met);
 		},
 		tier: "bronze",
 	},
@@ -181,8 +181,8 @@ const ACHIEVEMENTS: AchievementWithCriteria[] = [
 		description: "Maintain a 3-day solving streak",
 		icon: <Flame className="w-5 h-5 text-orange-500" />,
 		criteria: (_times: TimeRecord[]) => {
-			const streakStatus = getCurrentStreakStatus();
-			return streakStatus.currentStreak >= 3;
+			const currentStreak = getCurrentStreak();
+			return currentStreak >= 3;
 		},
 		tier: "bronze",
 	},
@@ -192,8 +192,8 @@ const ACHIEVEMENTS: AchievementWithCriteria[] = [
 		description: "Maintain a 7-day solving streak",
 		icon: <Flame className="w-5 h-5 text-orange-600" />,
 		criteria: (_times: TimeRecord[]) => {
-			const streakStatus = getCurrentStreakStatus();
-			return streakStatus.currentStreak >= 7;
+			const currentStreak = getCurrentStreak();
+			return currentStreak >= 7;
 		},
 		tier: "silver",
 	},
@@ -203,8 +203,8 @@ const ACHIEVEMENTS: AchievementWithCriteria[] = [
 		description: "Maintain a 14-day solving streak",
 		icon: <Flame className="w-5 h-5 text-red-500" />,
 		criteria: (_times: TimeRecord[]) => {
-			const streakStatus = getCurrentStreakStatus();
-			return streakStatus.currentStreak >= 14;
+			const currentStreak = getCurrentStreak();
+			return currentStreak >= 14;
 		},
 		tier: "gold",
 	},
@@ -214,8 +214,8 @@ const ACHIEVEMENTS: AchievementWithCriteria[] = [
 		description: "Maintain a 30-day solving streak",
 		icon: <Flame className="w-5 h-5 text-purple-600" />,
 		criteria: (_times: TimeRecord[]) => {
-			const streakStatus = getCurrentStreakStatus();
-			return streakStatus.currentStreak >= 30;
+			const currentStreak = getCurrentStreak();
+			return currentStreak >= 30;
 		},
 		tier: "diamond",
 	},
@@ -225,8 +225,8 @@ const ACHIEVEMENTS: AchievementWithCriteria[] = [
 		description: "Meet your daily goal every day for a week",
 		icon: <Calendar className="w-5 h-5 text-green-500" />,
 		criteria: (_times: TimeRecord[]) => {
-			const weeklyProgress = getWeeklyProgress();
-			return weeklyProgress.length === 7 && weeklyProgress.every((day) => day.goalMet);
+			const weeklyProgress = getDailyProgress(7);
+			return weeklyProgress.length === 7 && weeklyProgress.every((day) => day.goal_met);
 		},
 		tier: "gold",
 	},
@@ -236,10 +236,9 @@ const ACHIEVEMENTS: AchievementWithCriteria[] = [
 		description: "Complete double your daily goal in a single day",
 		icon: <Zap className="w-5 h-5 text-yellow-500" />,
 		criteria: (_times: TimeRecord[]) => {
-			const dailySettings = loadDailySettings();
-			const streakStatus = getCurrentStreakStatus();
-			const todayProgress = streakStatus.todayProgress;
-			return todayProgress ? todayProgress.solveCount >= dailySettings.dailyGoal * 2 : false;
+			const dailyGoal = getDailyGoal();
+			const todayProgress = getDailyProgress(1)[0];
+			return todayProgress ? todayProgress.solve_count >= dailyGoal * 2 : false;
 		},
 		tier: "silver",
 	},
@@ -249,13 +248,13 @@ const ACHIEVEMENTS: AchievementWithCriteria[] = [
 		description: "Set a new personal best during a 7+ day streak",
 		icon: <TrendingUp className="w-5 h-5 text-blue-600" />,
 		criteria: (times: TimeRecord[]) => {
-			const streakStatus = getCurrentStreakStatus();
-			if (streakStatus.currentStreak < 7) return false;
+			const currentStreak = getCurrentStreak();
+			if (currentStreak < 7) return false;
 
 			// Check if any PB was set in the current streak period
 			const today = new Date().toISOString().split("T")[0];
 			const streakStartDate = new Date(today);
-			streakStartDate.setDate(streakStartDate.getDate() - streakStatus.currentStreak + 1);
+			streakStartDate.setDate(streakStartDate.getDate() - currentStreak + 1);
 			const streakStartString = streakStartDate.toISOString().split("T")[0];
 
 			const timesInStreak = times.filter((t) => {

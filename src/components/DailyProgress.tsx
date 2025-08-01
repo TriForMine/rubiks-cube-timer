@@ -1,13 +1,8 @@
 "use client";
 
 import { Flame, Target } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
-import {
-	type DailyProgress as DailyProgressType,
-	getCurrentStreakStatus,
-	loadDailySettings,
-} from "@/lib/storage";
+import { useTinybaseStore } from "@/hooks/useTinybaseStore";
 import { cn } from "@/lib/utils";
 
 interface DailyProgressProps {
@@ -16,84 +11,56 @@ interface DailyProgressProps {
 		count: number;
 		bestTime: number | null;
 		avgTime: number | null;
-		dailyProgress: DailyProgressType | null;
+		dailyProgress: {
+			date: string;
+			solveCount: number;
+			totalTime: number;
+			bestTime: number | null;
+			goalMet: boolean;
+		} | null;
 		currentStreak: number;
 	};
 }
 
 export function DailyProgress({ className, sessionStats }: DailyProgressProps) {
-	const [streakStatus, setStreakStatus] = useState({
-		currentStreak: 0,
-		isActive: false,
-		daysUntilBreak: 0,
-		todayProgress: null as DailyProgressType | null,
-	});
-	const [dailySettings, setDailySettings] = useState({
-		dailyGoal: 10,
-		streakGoal: 7,
-	});
+	const { dailyGoal, currentStreak, dailyProgress } = useTinybaseStore();
 
-	useEffect(() => {
-		const loadData = () => {
-			const settings = loadDailySettings();
-			setDailySettings(settings);
+	// Get today's progress
+	const today = new Date().toISOString().split("T")[0];
+	const todayProgressFromStore = dailyProgress.find((p) => p.date === today);
 
-			if (sessionStats) {
-				// Use sessionStats if available (real-time data)
-				const todayProgress = sessionStats.dailyProgress;
-				const isActive = sessionStats.currentStreak > 0;
+	// Ensure all values are valid numbers
+	const safeDailyGoal = Math.max(1, Number(dailyGoal) || 10);
+	const solveCount = Math.max(
+		0,
+		Number(sessionStats?.dailyProgress?.solveCount) ||
+			Number(todayProgressFromStore?.solve_count) ||
+			0
+	);
+	const goalMet = Boolean(
+		sessionStats?.dailyProgress?.goalMet || todayProgressFromStore?.goal_met || false
+	);
+	const streakCount = Math.max(
+		0,
+		Number(sessionStats?.currentStreak) || Number(currentStreak) || 0
+	);
 
-				// Calculate days until break based on today's progress
-				let daysUntilBreak = 0;
-				if (todayProgress && todayProgress.solveCount >= settings.dailyGoal) {
-					daysUntilBreak = 0; // Goal met today
-				} else if (isActive) {
-					daysUntilBreak = 1; // Need to solve today to maintain streak
-				}
-
-				setStreakStatus({
-					currentStreak: sessionStats.currentStreak,
-					isActive: isActive,
-					daysUntilBreak: daysUntilBreak,
-					todayProgress: sessionStats.dailyProgress,
-				});
-			} else {
-				// Fallback to fetching data
-				setStreakStatus(getCurrentStreakStatus());
-			}
-		};
-
-		loadData();
-
-		// Only set up interval if we don't have sessionStats (fallback mode)
-		if (!sessionStats) {
-			const interval = setInterval(loadData, 60000);
-			return () => clearInterval(interval);
-		}
-	}, [sessionStats]);
-
-	const todayProgress = streakStatus.todayProgress;
-	const progressPercentage = todayProgress
-		? Math.min((todayProgress.solveCount / dailySettings.dailyGoal) * 100, 100)
-		: 0;
+	const progressPercentage = Math.max(0, Math.min((solveCount / safeDailyGoal) * 100, 100));
 
 	const getStreakStatusColor = () => {
-		if (!streakStatus.isActive) return "text-muted-foreground";
-		if (streakStatus.daysUntilBreak === 0) return "text-green-600 dark:text-green-400";
+		if (streakCount === 0) return "text-muted-foreground";
+		if (goalMet) return "text-green-600 dark:text-green-400";
 		return "text-orange-600 dark:text-orange-400";
 	};
 
 	const getStreakStatusText = () => {
-		if (!streakStatus.isActive && streakStatus.currentStreak === 0) {
+		if (streakCount === 0) {
 			return "Start your streak!";
 		}
-		if (!streakStatus.isActive) {
-			return "Streak broken";
+		if (goalMet) {
+			return "Goal completed!";
 		}
-		if (streakStatus.daysUntilBreak === 0) {
-			return "Active today";
-		}
-		return "Solve today!";
+		return "Keep going!";
 	};
 
 	return (
@@ -106,7 +73,7 @@ export function DailyProgress({ className, sessionStats }: DailyProgressProps) {
 						<span className="text-xs font-semibold text-blue-900 dark:text-blue-100">
 							Today's Goal
 						</span>
-						{todayProgress?.goalMet && (
+						{goalMet && (
 							<div className="flex items-center gap-1 px-2 py-0.5 bg-blue-600 dark:bg-blue-500 text-white rounded-full">
 								<svg
 									className="w-2.5 h-2.5"
@@ -126,10 +93,14 @@ export function DailyProgress({ className, sessionStats }: DailyProgressProps) {
 						)}
 					</div>
 					<span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-						{todayProgress?.solveCount || 0}/{dailySettings.dailyGoal}
+						{solveCount}/{safeDailyGoal}
 					</span>
 				</div>
-				<Progress value={progressPercentage} className="h-1.5 bg-blue-100 dark:bg-blue-900" />
+				<Progress
+					value={progressPercentage}
+					className="h-1.5 bg-blue-100 dark:bg-blue-900"
+					indicatorClassName="bg-blue-600 dark:bg-blue-400"
+				/>
 			</div>
 
 			{/* Current Streak - Compact */}
@@ -143,8 +114,7 @@ export function DailyProgress({ className, sessionStats }: DailyProgressProps) {
 					</div>
 					<div className="text-right">
 						<div className="text-xs font-bold text-orange-600 dark:text-orange-400">
-							{streakStatus.currentStreak} day
-							{streakStatus.currentStreak !== 1 ? "s" : ""}
+							{streakCount} day{streakCount !== 1 ? "s" : ""}
 						</div>
 						<div className={cn("text-xs", getStreakStatusColor())}>{getStreakStatusText()}</div>
 					</div>

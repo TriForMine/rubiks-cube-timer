@@ -25,7 +25,7 @@ import { StatCard } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import type { DailyProgress as DailyProgressType } from "@/lib/storage";
+
 import { cn, formatTime } from "@/lib/utils";
 
 interface AppLayoutProps {
@@ -36,7 +36,13 @@ interface AppLayoutProps {
 		count: number;
 		bestTime: number | null;
 		avgTime: number | null;
-		dailyProgress: DailyProgressType | null;
+		dailyProgress: {
+			date: string;
+			solveCount: number;
+			totalTime: number;
+			bestTime: number | null;
+			goalMet: boolean;
+		} | null;
 		currentStreak: number;
 	};
 }

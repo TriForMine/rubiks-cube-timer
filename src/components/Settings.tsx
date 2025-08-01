@@ -17,120 +17,121 @@ import {
 	Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { TimeRecord } from "@/app/page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSettings } from "@/contexts/SettingsContext";
-import { type DailySettings, loadDailySettings, saveDailySettings } from "@/lib/storage";
-import { cn, exportTimes, importTimes } from "@/lib/utils";
-
-interface ImportedTimeData {
-	id: unknown;
-	time: unknown;
-	scramble: unknown;
-	date: unknown;
-	penalty?: unknown;
-}
+import { useTinybaseStore } from "@/hooks/useTinybaseStore";
+import { cn } from "@/lib/utils";
 
 interface SettingsProps {
 	onClearAllTimes: () => void;
-	onImportTimes?: (times: TimeRecord[]) => void;
+	onImportTimes?: () => void;
 	onNewScramble?: () => void;
 }
 
-export function Settings({ onClearAllTimes, onImportTimes, onNewScramble }: SettingsProps) {
+export function Settings({ onClearAllTimes, onNewScramble }: SettingsProps) {
 	const { scrambleLength, showMilliseconds, timeFormat, updateSetting } = useSettings();
+	const {
+		times,
+		achievements,
+		dailyGoal,
+		streakGoal,
+		setDailyGoal,
+		setStreakGoal,
+		exportAllData,
+		importAllData,
+		clearAllUserData,
+		isInitialized,
+	} = useTinybaseStore();
+
 	const [showConfirmClear, setShowConfirmClear] = useState(false);
 	const [isImporting, setIsImporting] = useState(false);
-	const [dailySettings, setDailySettings] = useState<DailySettings>({
-		dailyGoal: 10,
-		streakGoal: 7,
-	});
-	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [isExporting, setIsExporting] = useState(false);
+	const [backupInfo, setBackupInfo] = useState<{
+		totalTimes: number;
+		totalAchievements: number;
+		dailyProgressDays: number;
+		userLevel: string;
+		currentStreak: number;
+	} | null>(null);
+	const backupInputRef = useRef<HTMLInputElement>(null);
 
+	// Get backup preview info
 	useEffect(() => {
-		setDailySettings(loadDailySettings());
-	}, []);
+		if (isInitialized) {
+			try {
+				const preview = exportAllData();
+				setBackupInfo({
+					totalTimes: preview.metadata.totalTimes,
+					totalAchievements: preview.metadata.totalAchievements,
+					dailyProgressDays: preview.metadata.dailyProgressDays,
+					userLevel: preview.metadata.userLevel,
+					currentStreak: preview.metadata.currentStreak,
+				});
+			} catch (error) {
+				console.error("Failed to get backup preview:", error);
+			}
+		}
+	}, [isInitialized, exportAllData]);
 
-	const handleExportTimes = () => {
-		const savedTimes = localStorage.getItem("rubiks-times");
-		if (savedTimes) {
-			const times = JSON.parse(savedTimes);
-			exportTimes(times);
+	const handleExportData = async () => {
+		try {
+			setIsExporting(true);
+			const backupData = exportAllData();
+
+			const blob = new Blob([JSON.stringify(backupData, null, 2)], {
+				type: "application/json",
+			});
+
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `cube-timer-backup-${new Date().toISOString().split("T")[0]}.json`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+		} catch (error) {
+			alert("Failed to export data");
+			console.error("Export error:", error);
+		} finally {
+			setIsExporting(false);
 		}
 	};
 
 	const handleImportClick = () => {
-		fileInputRef.current?.click();
+		backupInputRef.current?.click();
 	};
 
-	const handleImportTimes = async (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleImportData = async (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
+
 		setIsImporting(true);
+
 		try {
-			const importedTimes = await importTimes(file);
+			const text = await file.text();
+			const backupData = JSON.parse(text);
 
-			const validTimes = (importedTimes as ImportedTimeData[])
-				.filter((time) => {
-					return time.id && typeof time.time === "number" && time.scramble && time.date;
-				})
-				.map((time) => {
-					// Ensure date is properly converted to Date object
-					const dateValue = time.date;
-					let dateObj: Date;
-
-					if (dateValue instanceof Date) {
-						dateObj = dateValue;
-					} else if (typeof dateValue === "string" || typeof dateValue === "number") {
-						dateObj = new Date(dateValue);
-					} else {
-						// Fallback to current date if invalid
-						dateObj = new Date();
-					}
-
-					// Validate the date is not Invalid Date
-					if (Number.isNaN(dateObj.getTime())) {
-						dateObj = new Date();
-					}
-
-					return {
-						...time,
-						date: dateObj,
-					} as TimeRecord;
-				});
-
-			if (validTimes.length > 0) {
-				const existingTimes = JSON.parse(localStorage.getItem("rubiks-times") || "[]").map(
-					(time: {
-						id: string;
-						time: number;
-						scramble: string;
-						date: string | Date;
-						penalty?: string;
-					}) => ({
-						...time,
-						date: new Date(time.date),
-					})
-				);
-				const allTimes = [...validTimes, ...existingTimes];
-
-				const uniqueTimes = allTimes.filter(
-					(time, index, arr) => arr.findIndex((t) => t.id === time.id) === index
-				);
-
-				localStorage.setItem("rubiks-times", JSON.stringify(uniqueTimes));
-
-				if (onImportTimes) {
-					onImportTimes(uniqueTimes);
-				}
-
-				alert(`Successfully imported ${validTimes.length} times!`);
-			} else {
-				alert("No valid times found in the file.");
+			if (!backupData.version || !backupData.tables || !backupData.values) {
+				throw new Error("Invalid backup format");
 			}
+
+			await importAllData(backupData);
+
+			// Show detailed import success message
+			const { metadata } = backupData;
+			alert(
+				`Data imported successfully!\n\n` +
+					`Imported:\n` +
+					`• ${metadata.totalTimes} solve times\n` +
+					`• ${metadata.totalAchievements} achievements\n` +
+					`• ${metadata.dailyProgressDays} days of progress\n` +
+					`• User level: ${metadata.userLevel}\n` +
+					`• Current streak: ${metadata.currentStreak}`
+			);
 		} catch (error) {
-			alert("Failed to import times. Please check the file format.");
+			alert("Failed to import data. Please check the file format.");
 			console.error("Import error:", error);
 		} finally {
 			setIsImporting(false);
@@ -138,15 +139,9 @@ export function Settings({ onClearAllTimes, onImportTimes, onNewScramble }: Sett
 		}
 	};
 
-	const updateDailySetting = <K extends keyof DailySettings>(key: K, value: DailySettings[K]) => {
-		const newSettings = { ...dailySettings, [key]: value };
-		setDailySettings(newSettings);
-		saveDailySettings(newSettings);
-	};
-
-	const handleClearAllTimes = () => {
+	const handleClearAllData = async () => {
 		if (showConfirmClear) {
-			onClearAllTimes();
+			await clearAllUserData();
 			setShowConfirmClear(false);
 		} else {
 			setShowConfirmClear(true);
@@ -318,25 +313,57 @@ export function Settings({ onClearAllTimes, onImportTimes, onNewScramble }: Sett
 				<SettingCard
 					icon={Shield}
 					title="Data Management"
-					description="Import, export, and manage your solve data"
+					description="Complete backup, restore, and manage all your data"
 				>
 					<div className="space-y-4">
+						{/* Backup Preview */}
+						{backupInfo && (
+							<div className="p-4 bg-muted/30 rounded-lg border">
+								<h4 className="font-semibold text-sm mb-2">What will be exported:</h4>
+								<div className="grid grid-cols-2 gap-2 text-xs">
+									<div className="flex justify-between">
+										<span>Solve Times:</span>
+										<span className="font-mono">{backupInfo.totalTimes}</span>
+									</div>
+									<div className="flex justify-between">
+										<span>Achievements:</span>
+										<span className="font-mono">{backupInfo.totalAchievements}</span>
+									</div>
+									<div className="flex justify-between">
+										<span>Daily Progress:</span>
+										<span className="font-mono">{backupInfo.dailyProgressDays} days</span>
+									</div>
+									<div className="flex justify-between">
+										<span>Current Streak:</span>
+										<span className="font-mono">{backupInfo.currentStreak}</span>
+									</div>
+								</div>
+								<div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
+									<div>
+										User Level: <span className="font-medium">{backupInfo.userLevel}</span>
+									</div>
+									<div className="mt-1">✓ All settings, statistics, and progress data included</div>
+								</div>
+							</div>
+						)}
+
 						<Button
-							onClick={handleExportTimes}
+							onClick={handleExportData}
+							disabled={isExporting}
 							variant="default"
 							size="lg"
 							className="w-full group"
 						>
 							<Download className="w-5 h-5 mr-2 group-hover:translate-y-0.5 transition-transform duration-200" />
-							Export Times
+							{isExporting ? "Exporting..." : "Export Complete Backup"}
 						</Button>
 
 						<div>
 							<input
-								ref={fileInputRef}
+								ref={backupInputRef}
 								type="file"
 								accept=".json"
-								onChange={handleImportTimes}
+								onChange={handleImportData}
 								disabled={isImporting}
 								className="hidden"
 							/>
@@ -348,28 +375,48 @@ export function Settings({ onClearAllTimes, onImportTimes, onNewScramble }: Sett
 								className="w-full"
 							>
 								<Upload className="w-5 h-5 mr-2" />
-								{isImporting ? "Importing..." : "Import Times"}
+								{isImporting ? "Importing..." : "Import Backup"}
 							</Button>
 						</div>
 
 						<div className="border-t pt-4">
 							<Button
-								onClick={handleClearAllTimes}
+								onClick={handleClearAllData}
 								variant={showConfirmClear ? "destructive" : "outline"}
 								size="lg"
 								className="w-full"
 							>
 								<Trash2 className="w-5 h-5 mr-2" />
-								{showConfirmClear ? "Click to Confirm" : "Clear All Times"}
+								{showConfirmClear ? "Click to Confirm" : "Clear All Data"}
 							</Button>
 
 							{showConfirmClear && (
 								<div className="mt-3 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
 									<p className="text-sm text-destructive font-medium text-center">
-										⚠️ This will permanently delete all your times!
+										⚠️ This will permanently delete all your data!
 									</p>
+									<div className="text-xs text-destructive/80 mt-1 text-center">
+										Times • Achievements • Statistics • Progress • Settings
+									</div>
 								</div>
 							)}
+						</div>
+
+						{/* Import/Export Info */}
+						<div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+							<div className="text-xs text-blue-700 dark:text-blue-300">
+								<div className="font-medium mb-1">📦 Complete Data Backup Includes:</div>
+								<div className="grid grid-cols-2 gap-1">
+									<div>• All solve times & penalties</div>
+									<div>• Personal best records</div>
+									<div>• Achievement progress</div>
+									<div>• Daily solve tracking</div>
+									<div>• Streak counters</div>
+									<div>• User level & settings</div>
+									<div>• Statistics & averages</div>
+									<div>• Progress history</div>
+								</div>
+							</div>
 						</div>
 					</div>
 				</SettingCard>
@@ -388,9 +435,7 @@ export function Settings({ onClearAllTimes, onImportTimes, onNewScramble }: Sett
 									Daily Solve Goal
 								</label>
 								<div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1">
-									<span className="text-sm font-mono font-bold text-primary">
-										{dailySettings.dailyGoal}
-									</span>
+									<span className="text-sm font-mono font-bold text-primary">{dailyGoal}</span>
 									<span className="text-xs text-muted-foreground">solves</span>
 								</div>
 							</div>
@@ -401,11 +446,11 @@ export function Settings({ onClearAllTimes, onImportTimes, onNewScramble }: Sett
 									type="range"
 									min="5"
 									max="50"
-									value={dailySettings.dailyGoal}
-									onChange={(e) => updateDailySetting("dailyGoal", Number(e.target.value))}
+									value={dailyGoal}
+									onChange={(e) => setDailyGoal(Number(e.target.value))}
 									className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
 									style={{
-										background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${((dailySettings.dailyGoal - 5) / (50 - 5)) * 100}%, hsl(var(--muted)) ${((dailySettings.dailyGoal - 5) / (50 - 5)) * 100}%, hsl(var(--muted)) 100%)`,
+										background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${((dailyGoal - 5) / (50 - 5)) * 100}%, hsl(var(--muted)) ${((dailyGoal - 5) / (50 - 5)) * 100}%, hsl(var(--muted)) 100%)`,
 									}}
 								/>
 								<div className="flex justify-between text-xs text-muted-foreground mt-2">
@@ -424,9 +469,7 @@ export function Settings({ onClearAllTimes, onImportTimes, onNewScramble }: Sett
 								</label>
 								<div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1">
 									<Flame className="w-3 h-3 text-orange-500" />
-									<span className="text-sm font-mono font-bold text-primary">
-										{dailySettings.streakGoal}
-									</span>
+									<span className="text-sm font-mono font-bold text-primary">{streakGoal}</span>
 									<span className="text-xs text-muted-foreground">days</span>
 								</div>
 							</div>
@@ -437,11 +480,11 @@ export function Settings({ onClearAllTimes, onImportTimes, onNewScramble }: Sett
 									type="range"
 									min="3"
 									max="30"
-									value={dailySettings.streakGoal}
-									onChange={(e) => updateDailySetting("streakGoal", Number(e.target.value))}
+									value={streakGoal}
+									onChange={(e) => setStreakGoal(Number(e.target.value))}
 									className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
 									style={{
-										background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${((dailySettings.streakGoal - 3) / (30 - 3)) * 100}%, hsl(var(--muted)) ${((dailySettings.streakGoal - 3) / (30 - 3)) * 100}%, hsl(var(--muted)) 100%)`,
+										background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${((streakGoal - 3) / (30 - 3)) * 100}%, hsl(var(--muted)) ${((streakGoal - 3) / (30 - 3)) * 100}%, hsl(var(--muted)) 100%)`,
 									}}
 								/>
 								<div className="flex justify-between text-xs text-muted-foreground mt-2">
@@ -494,13 +537,13 @@ export function Settings({ onClearAllTimes, onImportTimes, onNewScramble }: Sett
 							<div>
 								<h3 className="font-bold text-lg">CubeTimer v0.1.0</h3>
 								<p className="text-sm text-muted-foreground">
-									Professional speedcubing timer built with Next.js & React
+									Professional speedcubing timer with TinyBase storage
 								</p>
 							</div>
 						</div>
 						<div className="flex items-center gap-2 text-sm text-muted-foreground">
 							<Zap className="w-4 h-4 text-primary" />
-							<span>Powered by modern web tech</span>
+							<span>Powered by TinyBase & IndexedDB</span>
 						</div>
 					</div>
 				</CardContent>

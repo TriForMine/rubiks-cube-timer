@@ -1,18 +1,10 @@
 "use client";
 
 import { BarChart3, Calendar, Flame, Star, Target, Trophy } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, StatCard } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import {
-	type DailyProgress as DailyProgressType,
-	type DailySettings,
-	getCurrentStreakStatus,
-	getWeeklyProgress,
-	loadDailySettings,
-	loadStreakData,
-	type StreakData,
-} from "@/lib/storage";
+import { useTinybaseStore } from "@/hooks/useTinybaseStore";
 import { cn, formatTime } from "@/lib/utils";
 
 interface DailyStatisticsProps {
@@ -20,36 +12,45 @@ interface DailyStatisticsProps {
 }
 
 export function DailyStatistics({ className }: DailyStatisticsProps) {
-	const [streakStatus, setStreakStatus] = useState({
-		currentStreak: 0,
-		isActive: false,
-		daysUntilBreak: 0,
-		todayProgress: null as DailyProgressType | null,
-	});
-	const [weeklyProgress, setWeeklyProgress] = useState<DailyProgressType[]>([]);
-	const [streakData, setStreakData] = useState<StreakData | null>(null);
-	const [dailySettings, setDailySettings] = useState<DailySettings>({
-		dailyGoal: 10,
-		streakGoal: 7,
-	});
+	const { dailyProgress, dailyGoal, streakGoal, currentStreak, longestStreak } = useTinybaseStore();
 
-	useEffect(() => {
-		const loadData = () => {
-			setStreakStatus(getCurrentStreakStatus());
-			setWeeklyProgress(getWeeklyProgress());
-			setStreakData(loadStreakData());
-			setDailySettings(loadDailySettings());
-		};
+	// Get today's date
+	const today = new Date().toISOString().split("T")[0];
 
-		loadData();
-		const interval = setInterval(loadData, 60000);
-		return () => clearInterval(interval);
-	}, []);
+	// Get last 7 days of progress
+	const weeklyProgress = useMemo(() => {
+		const days = [];
+		for (let i = 6; i >= 0; i--) {
+			const date = new Date();
+			date.setDate(date.getDate() - i);
+			const dateString = date.toISOString().split("T")[0];
 
-	const todayProgress = streakStatus.todayProgress;
-	const progressPercentage = todayProgress
-		? Math.min((todayProgress.solveCount / dailySettings.dailyGoal) * 100, 100)
-		: 0;
+			const dayProgress = dailyProgress.find((p) => p.date === dateString);
+			days.push({
+				date: dateString,
+				solveCount: dayProgress?.solve_count || 0,
+				totalTime: dayProgress?.total_time || 0,
+				bestTime: dayProgress?.best_time || null,
+				goalMet: dayProgress?.goal_met || false,
+			});
+		}
+		return days;
+	}, [dailyProgress]);
+
+	// Today's progress - get from both session stats and store data
+	const todayProgressFromStore = weeklyProgress.find((day) => day.date === today);
+	const todayProgress = {
+		date: today,
+		solveCount: Math.max(0, todayProgressFromStore?.solveCount || 0),
+		totalTime: Math.max(0, todayProgressFromStore?.totalTime || 0),
+		bestTime: todayProgressFromStore?.bestTime || null,
+		goalMet: Boolean(todayProgressFromStore?.goalMet || false),
+	};
+
+	const progressPercentage = Math.max(
+		0,
+		Math.min(dailyGoal > 0 ? (todayProgress.solveCount / dailyGoal) * 100 : 0, 100)
+	);
 
 	// Calculate additional statistics
 	const totalDaysWithSolves = weeklyProgress.filter((day) => day.solveCount > 0).length;
@@ -66,19 +67,16 @@ export function DailyStatistics({ className }: DailyStatisticsProps) {
 	}, weeklyProgress[0] || { bestTime: null, date: "", solveCount: 0 });
 
 	const getStreakStatusColor = () => {
-		if (!streakStatus.isActive) return "text-red-500";
-		if (streakStatus.daysUntilBreak === 0) return "text-green-500";
+		if (currentStreak === 0) return "text-red-500";
+		if (todayProgress.goalMet) return "text-green-500";
 		return "text-orange-500";
 	};
 
 	const getStreakStatusText = () => {
-		if (!streakStatus.isActive && streakStatus.currentStreak === 0) {
+		if (currentStreak === 0) {
 			return "Start your streak today!";
 		}
-		if (!streakStatus.isActive) {
-			return "Streak broken - restart today";
-		}
-		if (streakStatus.daysUntilBreak === 0) {
+		if (todayProgress.goalMet) {
 			return "Active - great job!";
 		}
 		return "Solve today to maintain streak";
@@ -101,7 +99,7 @@ export function DailyStatistics({ className }: DailyStatisticsProps) {
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatCard
 					title="Current Streak"
-					value={`${streakStatus.currentStreak} day${streakStatus.currentStreak !== 1 ? "s" : ""}`}
+					value={`${currentStreak} day${currentStreak !== 1 ? "s" : ""}`}
 					icon={<Flame className="w-4 h-4" />}
 					className="border-orange-200/50 dark:border-orange-800/50"
 					subtitle={
@@ -113,23 +111,23 @@ export function DailyStatistics({ className }: DailyStatisticsProps) {
 
 				<StatCard
 					title="Longest Streak"
-					value={`${streakData?.longestStreak || 0} day${(streakData?.longestStreak || 0) !== 1 ? "s" : ""}`}
+					value={`${longestStreak} day${longestStreak !== 1 ? "s" : ""}`}
 					icon={<Trophy className="w-4 h-4" />}
 					className="border-amber-200/50 dark:border-amber-800/50"
 				/>
 
 				<StatCard
 					title="Today's Solves"
-					value={todayProgress?.solveCount || 0}
+					value={todayProgress.solveCount}
 					icon={<Target className="w-4 h-4" />}
 					className="border-blue-200/50 dark:border-blue-800/50"
 					subtitle={
-						todayProgress?.goalMet ? (
+						todayProgress.goalMet ? (
 							<span className="text-xs text-green-600 dark:text-green-400 font-medium">
 								Goal completed! 🎉
 							</span>
 						) : (
-							<span className="text-xs text-muted-foreground">Goal: {dailySettings.dailyGoal}</span>
+							<span className="text-xs text-muted-foreground">Goal: {dailyGoal}</span>
 						)
 					}
 				/>
@@ -162,13 +160,17 @@ export function DailyStatistics({ className }: DailyStatisticsProps) {
 					<div className="space-y-2">
 						<div className="flex justify-between items-center">
 							<span className="text-sm font-medium">
-								Progress: {todayProgress?.solveCount || 0} / {dailySettings.dailyGoal} solves
+								Progress: {todayProgress.solveCount} / {dailyGoal} solves
 							</span>
 							<span className="text-sm font-bold text-primary">
 								{Math.round(progressPercentage)}%
 							</span>
 						</div>
-						<Progress value={progressPercentage} className="h-3 bg-blue-100 dark:bg-blue-900" />
+						<Progress
+							value={Math.max(0, Number.isNaN(progressPercentage) ? 0 : progressPercentage)}
+							className="h-3 bg-blue-100 dark:bg-blue-900"
+							indicatorClassName="bg-blue-600 dark:bg-blue-400"
+						/>
 					</div>
 
 					{todayProgress && todayProgress.solveCount > 0 && (
@@ -236,7 +238,7 @@ export function DailyStatistics({ className }: DailyStatisticsProps) {
 								const dayName = new Date(day.date).toLocaleDateString("en", {
 									weekday: "short",
 								});
-								const isToday = day.date === new Date().toISOString().split("T")[0];
+								const isToday = day.date === today;
 								const hasProgress = day.solveCount > 0;
 								const metGoal = day.goalMet;
 
@@ -337,7 +339,7 @@ export function DailyStatistics({ className }: DailyStatisticsProps) {
 					<div className="grid grid-cols-2 gap-4">
 						<div className="text-center p-4 border rounded-lg">
 							<div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-								{streakStatus.currentStreak}
+								{currentStreak}
 							</div>
 							<div className="text-sm text-muted-foreground">Current Streak</div>
 							<div className={cn("text-xs font-medium mt-1", getStreakStatusColor())}>
@@ -346,14 +348,14 @@ export function DailyStatistics({ className }: DailyStatisticsProps) {
 						</div>
 						<div className="text-center p-4 border rounded-lg">
 							<div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-								{streakData?.longestStreak || 0}
+								{longestStreak}
 							</div>
 							<div className="text-sm text-muted-foreground">Longest Streak</div>
 							<div className="text-xs text-muted-foreground mt-1">Personal record</div>
 						</div>
 					</div>
 
-					{streakStatus.currentStreak >= dailySettings.streakGoal && (
+					{currentStreak >= streakGoal && (
 						<div className="p-3 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200/30 dark:border-green-800/30">
 							<div className="flex items-center gap-2">
 								<Star className="w-4 h-4 text-green-600 dark:text-green-400" />
@@ -362,7 +364,7 @@ export function DailyStatistics({ className }: DailyStatisticsProps) {
 								</span>
 							</div>
 							<div className="text-xs text-green-600 dark:text-green-400 mt-1">
-								You've reached your {dailySettings.streakGoal}-day streak target!
+								You've reached your {streakGoal}-day streak target!
 							</div>
 						</div>
 					)}

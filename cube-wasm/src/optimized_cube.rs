@@ -2,7 +2,6 @@
 // 54 stickers stored as u8 color values (0-5)
 // Face layout: U(0-8), D(9-17), F(18-26), B(27-35), R(36-44), L(45-53)
 // Each face uses standard 3x3 indexing: 0-2 top row, 3-5 middle, 6-8 bottom
-
 #[cfg(target_arch = "wasm32")]
 use js_sys;
 #[repr(C)]
@@ -10,7 +9,6 @@ use js_sys;
 pub struct OptimizedCube {
     stickers: [u8; 54],
 }
-
 // Move encoding: each move is represented as a single byte enum value
 // 0-5: U, D, F, B, R, L (90° clockwise rotations)
 // 6-11: U', D', F', B', R', L' (90° counter-clockwise rotations)
@@ -37,7 +35,6 @@ pub enum MoveCode {
     R2 = 16,
     L2 = 17,
 }
-
 impl MoveCode {
     /// Parse a move string into a MoveCode enum variant
     /// Supports standard notation: U, U', U2, etc.
@@ -64,7 +61,6 @@ impl MoveCode {
             _ => Err(format!("Invalid move: {}", move_str)),
         }
     }
-
     /// Convert a byte value (0-17) to a MoveCode enum variant
     /// Used for efficient move storage and batch processing
     pub fn from_u8(code: u8) -> Result<Self, String> {
@@ -75,7 +71,6 @@ impl MoveCode {
         }
     }
 }
-
 impl OptimizedCube {
     /// Color constants for cube faces (matches standard color scheme)
     /// WHITE=U, YELLOW=D, GREEN=F, BLUE=B, RED=R, ORANGE=L
@@ -85,12 +80,10 @@ impl OptimizedCube {
     pub const BLUE: u8 = 3;
     pub const RED: u8 = 4;
     pub const ORANGE: u8 = 5;
-
     /// Create a new cube in solved state
     pub fn new() -> OptimizedCube {
         OptimizedCube::solved()
     }
-
     /// Convert face ID and position to flat buffer index
     /// Face: 0=U, 1=D, 2=F, 3=B, 4=R, 5=L
     /// Position: 0-8 within face (row-major order)
@@ -107,7 +100,6 @@ impl OptimizedCube {
             _ => panic!("Invalid face: {}", face),
         }
     }
-
     /// Face index constants for improved readability
     const U: usize = 0;
     const D: usize = 1;
@@ -115,11 +107,9 @@ impl OptimizedCube {
     const B: usize = 3;
     const R: usize = 4;
     const L: usize = 5;
-
     /// Create a cube in solved state with each face showing its own color
     pub fn solved() -> OptimizedCube {
         let mut stickers = [0u8; 54];
-
         // Fill each face with its color
         for i in 0..9 {
             stickers[i] = Self::WHITE;
@@ -139,104 +129,53 @@ impl OptimizedCube {
         for i in 45..54 {
             stickers[i] = Self::ORANGE;
         } // L face
-
         OptimizedCube { stickers }
     }
-
     /// Get raw pointer to sticker data for WebAssembly/JavaScript interop
     /// Enables zero-copy access from JavaScript
     pub fn ptr(&self) -> *const u8 {
         self.stickers.as_ptr()
     }
-
     /// Get immutable reference to the sticker array
     pub fn stickers(&self) -> &[u8; 54] {
         &self.stickers
     }
-
     /// Get mutable reference to the sticker array
     pub fn stickers_mut(&mut self) -> &mut [u8; 54] {
         &mut self.stickers
     }
-
     /// Apply a single move to the cube using optimized algorithms
-    /// Prime moves (X') are implemented as 3 clockwise moves
-    /// Double moves (X2) are implemented as 2 clockwise moves
     pub fn apply_move_code(&mut self, move_code: MoveCode) {
         match move_code {
-            MoveCode::U => self.apply_u_move(),
-            MoveCode::D => self.apply_d_move(),
-            MoveCode::F => self.apply_f_move(),
-            MoveCode::B => self.apply_b_move(),
-            MoveCode::R => self.apply_r_move(),
-            MoveCode::L => self.apply_l_move(),
-            MoveCode::Up => {
-                self.apply_u_move();
-                self.apply_u_move();
-                self.apply_u_move();
-            }
-            MoveCode::Dp => {
-                self.apply_d_move();
-                self.apply_d_move();
-                self.apply_d_move();
-            }
-            MoveCode::Fp => {
-                self.apply_f_move();
-                self.apply_f_move();
-                self.apply_f_move();
-            }
-            MoveCode::Bp => {
-                self.apply_b_move();
-                self.apply_b_move();
-                self.apply_b_move();
-            }
-            MoveCode::Rp => {
-                self.apply_r_move();
-                self.apply_r_move();
-                self.apply_r_move();
-            }
-            MoveCode::Lp => {
-                self.apply_l_move();
-                self.apply_l_move();
-                self.apply_l_move();
-            }
-            MoveCode::U2 => {
-                self.apply_u_move();
-                self.apply_u_move();
-            }
-            MoveCode::D2 => {
-                self.apply_d_move();
-                self.apply_d_move();
-            }
-            MoveCode::F2 => {
-                self.apply_f_move();
-                self.apply_f_move();
-            }
-            MoveCode::B2 => {
-                self.apply_b_move();
-                self.apply_b_move();
-            }
-            MoveCode::R2 => {
-                self.apply_r_move();
-                self.apply_r_move();
-            }
-            MoveCode::L2 => {
-                self.apply_l_move();
-                self.apply_l_move();
-            }
+            MoveCode::U => self.apply_u(),
+            MoveCode::D => self.apply_d(),
+            MoveCode::F => self.apply_f(),
+            MoveCode::B => self.apply_b(),
+            MoveCode::R => self.apply_r(),
+            MoveCode::L => self.apply_l(),
+            MoveCode::Up => self.apply_u_prime(),
+            MoveCode::Dp => self.apply_d_prime(),
+            MoveCode::Fp => self.apply_f_prime(),
+            MoveCode::Bp => self.apply_b_prime(),
+            MoveCode::Rp => self.apply_r_prime(),
+            MoveCode::Lp => self.apply_l_prime(),
+            MoveCode::U2 => self.apply_u_double(),
+            MoveCode::D2 => self.apply_d_double(),
+            MoveCode::F2 => self.apply_f_double(),
+            MoveCode::B2 => self.apply_b_double(),
+            MoveCode::R2 => self.apply_r_double(),
+            MoveCode::L2 => self.apply_l_double(),
         }
     }
-
     /// Apply U move: rotate upper face 90° clockwise
     /// Also cycles the top row of adjacent faces: F→R→B→L→F
-    fn apply_u_move(&mut self) {
+    fn apply_u(&mut self) {
         // Rotate U face stickers 90° clockwise
         let temp = self.stickers[0];
         self.stickers[0] = self.stickers[6];
         self.stickers[6] = self.stickers[8];
         self.stickers[8] = self.stickers[2];
         self.stickers[2] = temp;
-
         let temp = self.stickers[1];
         self.stickers[1] = self.stickers[3];
         self.stickers[3] = self.stickers[7];
@@ -248,38 +187,84 @@ impl OptimizedCube {
             self.stickers[Self::face_index(Self::F, 1)],
             self.stickers[Self::face_index(Self::F, 2)],
         ];
-
         // R[0,1,2] → F[0,1,2]
         self.stickers[Self::face_index(Self::F, 0)] = self.stickers[Self::face_index(Self::R, 0)];
         self.stickers[Self::face_index(Self::F, 1)] = self.stickers[Self::face_index(Self::R, 1)];
         self.stickers[Self::face_index(Self::F, 2)] = self.stickers[Self::face_index(Self::R, 2)];
-
         // B[0,1,2] → R[0,1,2]
         self.stickers[Self::face_index(Self::R, 0)] = self.stickers[Self::face_index(Self::B, 0)];
         self.stickers[Self::face_index(Self::R, 1)] = self.stickers[Self::face_index(Self::B, 1)];
         self.stickers[Self::face_index(Self::R, 2)] = self.stickers[Self::face_index(Self::B, 2)];
-
         // L[0,1,2] → B[0,1,2]
         self.stickers[Self::face_index(Self::B, 0)] = self.stickers[Self::face_index(Self::L, 0)];
         self.stickers[Self::face_index(Self::B, 1)] = self.stickers[Self::face_index(Self::L, 1)];
         self.stickers[Self::face_index(Self::B, 2)] = self.stickers[Self::face_index(Self::L, 2)];
-
         // temp (old F[0,1,2]) → L[0,1,2]
         self.stickers[Self::face_index(Self::L, 0)] = temp[0];
         self.stickers[Self::face_index(Self::L, 1)] = temp[1];
         self.stickers[Self::face_index(Self::L, 2)] = temp[2];
     }
-
+    /// Apply U' move: rotate upper face 90° counter-clockwise
+    /// Also cycles the top row of adjacent faces: F→L→B→R→F
+    fn apply_u_prime(&mut self) {
+        // Rotate U face stickers 90° counter-clockwise
+        let temp = self.stickers[0];
+        self.stickers[0] = self.stickers[2];
+        self.stickers[2] = self.stickers[8];
+        self.stickers[8] = self.stickers[6];
+        self.stickers[6] = temp;
+        let temp = self.stickers[1];
+        self.stickers[1] = self.stickers[5];
+        self.stickers[5] = self.stickers[7];
+        self.stickers[7] = self.stickers[3];
+        self.stickers[3] = temp;
+        // Cycle top edges of adjacent faces: F[0,1,2] → L[0,1,2] → B[0,1,2] → R[0,1,2] → F[0,1,2]
+        let temp = [
+            self.stickers[Self::face_index(Self::F, 0)],
+            self.stickers[Self::face_index(Self::F, 1)],
+            self.stickers[Self::face_index(Self::F, 2)],
+        ];
+        // L[0,1,2] → F[0,1,2]
+        self.stickers[Self::face_index(Self::F, 0)] = self.stickers[Self::face_index(Self::L, 0)];
+        self.stickers[Self::face_index(Self::F, 1)] = self.stickers[Self::face_index(Self::L, 1)];
+        self.stickers[Self::face_index(Self::F, 2)] = self.stickers[Self::face_index(Self::L, 2)];
+        // B[0,1,2] → L[0,1,2]
+        self.stickers[Self::face_index(Self::L, 0)] = self.stickers[Self::face_index(Self::B, 0)];
+        self.stickers[Self::face_index(Self::L, 1)] = self.stickers[Self::face_index(Self::B, 1)];
+        self.stickers[Self::face_index(Self::L, 2)] = self.stickers[Self::face_index(Self::B, 2)];
+        // R[0,1,2] → B[0,1,2]
+        self.stickers[Self::face_index(Self::B, 0)] = self.stickers[Self::face_index(Self::R, 0)];
+        self.stickers[Self::face_index(Self::B, 1)] = self.stickers[Self::face_index(Self::R, 1)];
+        self.stickers[Self::face_index(Self::B, 2)] = self.stickers[Self::face_index(Self::R, 2)];
+        // temp (old F[0,1,2]) → R[0,1,2]
+        self.stickers[Self::face_index(Self::R, 0)] = temp[0];
+        self.stickers[Self::face_index(Self::R, 1)] = temp[1];
+        self.stickers[Self::face_index(Self::R, 2)] = temp[2];
+    }
+    /// Apply U2 move: rotate upper face 180°
+    fn apply_u_double(&mut self) {
+        // Rotate U face stickers 180°
+        self.stickers.swap(0, 8);
+        self.stickers.swap(2, 6);
+        self.stickers.swap(1, 7);
+        self.stickers.swap(3, 5);
+        // Swap top edges of adjacent faces: F[0,1,2] ↔ B[0,1,2], R[0,1,2] ↔ L[0,1,2]
+        for i in 0..3 {
+            self.stickers
+                .swap(Self::face_index(Self::F, i), Self::face_index(Self::B, i));
+            self.stickers
+                .swap(Self::face_index(Self::R, i), Self::face_index(Self::L, i));
+        }
+    }
     /// Apply D move: rotate bottom face 90° clockwise
     /// Also cycles the bottom row of adjacent faces: F→L→B→R→F
-    fn apply_d_move(&mut self) {
+    fn apply_d(&mut self) {
         // Rotate D face stickers 90° clockwise
         let temp = self.stickers[9];
         self.stickers[9] = self.stickers[15];
         self.stickers[15] = self.stickers[17];
         self.stickers[17] = self.stickers[11];
         self.stickers[11] = temp;
-
         let temp = self.stickers[10];
         self.stickers[10] = self.stickers[12];
         self.stickers[12] = self.stickers[16];
@@ -291,38 +276,83 @@ impl OptimizedCube {
             self.stickers[Self::face_index(Self::F, 7)],
             self.stickers[Self::face_index(Self::F, 8)],
         ];
-
         // L[6,7,8] → F[6,7,8]
         self.stickers[Self::face_index(Self::F, 6)] = self.stickers[Self::face_index(Self::L, 6)];
         self.stickers[Self::face_index(Self::F, 7)] = self.stickers[Self::face_index(Self::L, 7)];
         self.stickers[Self::face_index(Self::F, 8)] = self.stickers[Self::face_index(Self::L, 8)];
-
         // B[6,7,8] → L[6,7,8]
         self.stickers[Self::face_index(Self::L, 6)] = self.stickers[Self::face_index(Self::B, 6)];
         self.stickers[Self::face_index(Self::L, 7)] = self.stickers[Self::face_index(Self::B, 7)];
         self.stickers[Self::face_index(Self::L, 8)] = self.stickers[Self::face_index(Self::B, 8)];
-
         // R[6,7,8] → B[6,7,8]
         self.stickers[Self::face_index(Self::B, 6)] = self.stickers[Self::face_index(Self::R, 6)];
         self.stickers[Self::face_index(Self::B, 7)] = self.stickers[Self::face_index(Self::R, 7)];
         self.stickers[Self::face_index(Self::B, 8)] = self.stickers[Self::face_index(Self::R, 8)];
-
         // temp (old F[6,7,8]) → R[6,7,8]
         self.stickers[Self::face_index(Self::R, 6)] = temp[0];
         self.stickers[Self::face_index(Self::R, 7)] = temp[1];
         self.stickers[Self::face_index(Self::R, 8)] = temp[2];
     }
-
+    /// Apply D' move: rotate bottom face 90° counter-clockwise
+    fn apply_d_prime(&mut self) {
+        // Rotate D face stickers 90° counter-clockwise
+        let temp = self.stickers[9];
+        self.stickers[9] = self.stickers[11];
+        self.stickers[11] = self.stickers[17];
+        self.stickers[17] = self.stickers[15];
+        self.stickers[15] = temp;
+        let temp = self.stickers[10];
+        self.stickers[10] = self.stickers[14];
+        self.stickers[14] = self.stickers[16];
+        self.stickers[16] = self.stickers[12];
+        self.stickers[12] = temp;
+        // Cycle bottom edges of adjacent faces: F[6,7,8] → R[6,7,8] → B[6,7,8] → L[6,7,8] → F[6,7,8]
+        let temp = [
+            self.stickers[Self::face_index(Self::F, 6)],
+            self.stickers[Self::face_index(Self::F, 7)],
+            self.stickers[Self::face_index(Self::F, 8)],
+        ];
+        // R[6,7,8] → F[6,7,8]
+        self.stickers[Self::face_index(Self::F, 6)] = self.stickers[Self::face_index(Self::R, 6)];
+        self.stickers[Self::face_index(Self::F, 7)] = self.stickers[Self::face_index(Self::R, 7)];
+        self.stickers[Self::face_index(Self::F, 8)] = self.stickers[Self::face_index(Self::R, 8)];
+        // B[6,7,8] → R[6,7,8]
+        self.stickers[Self::face_index(Self::R, 6)] = self.stickers[Self::face_index(Self::B, 6)];
+        self.stickers[Self::face_index(Self::R, 7)] = self.stickers[Self::face_index(Self::B, 7)];
+        self.stickers[Self::face_index(Self::R, 8)] = self.stickers[Self::face_index(Self::B, 8)];
+        // L[6,7,8] → B[6,7,8]
+        self.stickers[Self::face_index(Self::B, 6)] = self.stickers[Self::face_index(Self::L, 6)];
+        self.stickers[Self::face_index(Self::B, 7)] = self.stickers[Self::face_index(Self::L, 7)];
+        self.stickers[Self::face_index(Self::B, 8)] = self.stickers[Self::face_index(Self::L, 8)];
+        // temp (old F[6,7,8]) → L[6,7,8]
+        self.stickers[Self::face_index(Self::L, 6)] = temp[0];
+        self.stickers[Self::face_index(Self::L, 7)] = temp[1];
+        self.stickers[Self::face_index(Self::L, 8)] = temp[2];
+    }
+    /// Apply D2 move: rotate bottom face 180°
+    fn apply_d_double(&mut self) {
+        // Rotate D face stickers 180°
+        self.stickers.swap(9, 17);
+        self.stickers.swap(11, 15);
+        self.stickers.swap(10, 16);
+        self.stickers.swap(12, 14);
+        // Swap bottom edges of adjacent faces: F[6,7,8] ↔ B[6,7,8], R[6,7,8] ↔ L[6,7,8]
+        for i in 6..9 {
+            self.stickers
+                .swap(Self::face_index(Self::F, i), Self::face_index(Self::B, i));
+            self.stickers
+                .swap(Self::face_index(Self::R, i), Self::face_index(Self::L, i));
+        }
+    }
     /// Apply F move: rotate front face 90° clockwise
     /// Also cycles edges between U, R, D, L faces in a complex pattern
-    fn apply_f_move(&mut self) {
+    fn apply_f(&mut self) {
         // Rotate F face stickers 90° clockwise
         let temp = self.stickers[18];
         self.stickers[18] = self.stickers[24];
         self.stickers[24] = self.stickers[26];
         self.stickers[26] = self.stickers[20];
         self.stickers[20] = temp;
-
         let temp = self.stickers[19];
         self.stickers[19] = self.stickers[21];
         self.stickers[21] = self.stickers[25];
@@ -334,38 +364,83 @@ impl OptimizedCube {
             self.stickers[Self::face_index(Self::U, 7)],
             self.stickers[Self::face_index(Self::U, 8)],
         ];
-
         // L right column (reversed) → U bottom row
         self.stickers[Self::face_index(Self::U, 6)] = self.stickers[Self::face_index(Self::L, 8)];
         self.stickers[Self::face_index(Self::U, 7)] = self.stickers[Self::face_index(Self::L, 5)];
         self.stickers[Self::face_index(Self::U, 8)] = self.stickers[Self::face_index(Self::L, 2)];
-
         // D top row (reversed) → L right column
         self.stickers[Self::face_index(Self::L, 8)] = self.stickers[Self::face_index(Self::D, 2)];
         self.stickers[Self::face_index(Self::L, 5)] = self.stickers[Self::face_index(Self::D, 1)];
         self.stickers[Self::face_index(Self::L, 2)] = self.stickers[Self::face_index(Self::D, 0)];
-
         // R left column → D top row (reversed)
         self.stickers[Self::face_index(Self::D, 2)] = self.stickers[Self::face_index(Self::R, 0)];
         self.stickers[Self::face_index(Self::D, 1)] = self.stickers[Self::face_index(Self::R, 3)];
         self.stickers[Self::face_index(Self::D, 0)] = self.stickers[Self::face_index(Self::R, 6)];
-
         // temp (old U bottom row) → R left column
         self.stickers[Self::face_index(Self::R, 0)] = temp[0];
         self.stickers[Self::face_index(Self::R, 3)] = temp[1];
         self.stickers[Self::face_index(Self::R, 6)] = temp[2];
     }
-
+    /// Apply F' move: rotate front face 90° counter-clockwise
+    fn apply_f_prime(&mut self) {
+        // Rotate F face stickers 90° counter-clockwise
+        let temp = self.stickers[18];
+        self.stickers[18] = self.stickers[20];
+        self.stickers[20] = self.stickers[26];
+        self.stickers[26] = self.stickers[24];
+        self.stickers[24] = temp;
+        let temp = self.stickers[19];
+        self.stickers[19] = self.stickers[23];
+        self.stickers[23] = self.stickers[25];
+        self.stickers[25] = self.stickers[21];
+        self.stickers[21] = temp;
+        // Cycle edges: U bottom row ← R left column ← D top row (reversed) ← L right column (reversed) ← U
+        let temp = [
+            self.stickers[Self::face_index(Self::U, 6)],
+            self.stickers[Self::face_index(Self::U, 7)],
+            self.stickers[Self::face_index(Self::U, 8)],
+        ];
+        self.stickers[Self::face_index(Self::U, 6)] = self.stickers[Self::face_index(Self::R, 0)];
+        self.stickers[Self::face_index(Self::U, 7)] = self.stickers[Self::face_index(Self::R, 3)];
+        self.stickers[Self::face_index(Self::U, 8)] = self.stickers[Self::face_index(Self::R, 6)];
+        self.stickers[Self::face_index(Self::R, 0)] = self.stickers[Self::face_index(Self::D, 2)];
+        self.stickers[Self::face_index(Self::R, 3)] = self.stickers[Self::face_index(Self::D, 1)];
+        self.stickers[Self::face_index(Self::R, 6)] = self.stickers[Self::face_index(Self::D, 0)];
+        self.stickers[Self::face_index(Self::D, 2)] = self.stickers[Self::face_index(Self::L, 8)];
+        self.stickers[Self::face_index(Self::D, 1)] = self.stickers[Self::face_index(Self::L, 5)];
+        self.stickers[Self::face_index(Self::D, 0)] = self.stickers[Self::face_index(Self::L, 2)];
+        self.stickers[Self::face_index(Self::L, 8)] = temp[0];
+        self.stickers[Self::face_index(Self::L, 5)] = temp[1];
+        self.stickers[Self::face_index(Self::L, 2)] = temp[2];
+    }
+    /// Apply F2 move: rotate front face 180°
+    fn apply_f_double(&mut self) {
+        // Rotate F face stickers 180°
+        self.stickers.swap(18, 26);
+        self.stickers.swap(20, 24);
+        self.stickers.swap(19, 25);
+        self.stickers.swap(21, 23);
+        // Swap edges: U bottom row ↔ D top row (reversed), R left column ↔ L right column (reversed)
+        for i in 0..3 {
+            self.stickers.swap(
+                Self::face_index(Self::U, 6 + i),
+                Self::face_index(Self::D, 2 - i),
+            );
+            self.stickers.swap(
+                Self::face_index(Self::R, i * 3),
+                Self::face_index(Self::L, 2 + (2 - i) * 3),
+            );
+        }
+    }
     /// Apply B move: rotate back face 90° clockwise
     /// Also cycles edges between U, L, D, R faces with reversals
-    fn apply_b_move(&mut self) {
+    fn apply_b(&mut self) {
         // Rotate B face stickers 90° clockwise
         let temp = self.stickers[27];
         self.stickers[27] = self.stickers[33];
         self.stickers[33] = self.stickers[35];
         self.stickers[35] = self.stickers[29];
         self.stickers[29] = temp;
-
         let temp = self.stickers[28];
         self.stickers[28] = self.stickers[30];
         self.stickers[30] = self.stickers[34];
@@ -377,38 +452,83 @@ impl OptimizedCube {
             self.stickers[Self::face_index(Self::U, 1)],
             self.stickers[Self::face_index(Self::U, 2)],
         ];
-
         // R right column → U top row
         self.stickers[Self::face_index(Self::U, 0)] = self.stickers[Self::face_index(Self::R, 2)];
         self.stickers[Self::face_index(Self::U, 1)] = self.stickers[Self::face_index(Self::R, 5)];
         self.stickers[Self::face_index(Self::U, 2)] = self.stickers[Self::face_index(Self::R, 8)];
-
         // D bottom row (reversed) → R right column
         self.stickers[Self::face_index(Self::R, 2)] = self.stickers[Self::face_index(Self::D, 8)];
         self.stickers[Self::face_index(Self::R, 5)] = self.stickers[Self::face_index(Self::D, 7)];
         self.stickers[Self::face_index(Self::R, 8)] = self.stickers[Self::face_index(Self::D, 6)];
-
         // L left column (reversed) → D bottom row
         self.stickers[Self::face_index(Self::D, 8)] = self.stickers[Self::face_index(Self::L, 6)];
         self.stickers[Self::face_index(Self::D, 7)] = self.stickers[Self::face_index(Self::L, 3)];
         self.stickers[Self::face_index(Self::D, 6)] = self.stickers[Self::face_index(Self::L, 0)];
-
         // temp (old U top row) → L left column (reversed)
         self.stickers[Self::face_index(Self::L, 6)] = temp[0];
         self.stickers[Self::face_index(Self::L, 3)] = temp[1];
         self.stickers[Self::face_index(Self::L, 0)] = temp[2];
     }
-
+    /// Apply B' move: rotate back face 90° counter-clockwise
+    fn apply_b_prime(&mut self) {
+        // Rotate B face stickers 90° counter-clockwise
+        let temp = self.stickers[27];
+        self.stickers[27] = self.stickers[29];
+        self.stickers[29] = self.stickers[35];
+        self.stickers[35] = self.stickers[33];
+        self.stickers[33] = temp;
+        let temp = self.stickers[28];
+        self.stickers[28] = self.stickers[32];
+        self.stickers[32] = self.stickers[34];
+        self.stickers[34] = self.stickers[30];
+        self.stickers[30] = temp;
+        // Cycle edges: U top row ← L left column (reversed) ← D bottom row (reversed) ← R right column ← U
+        let temp = [
+            self.stickers[Self::face_index(Self::U, 0)],
+            self.stickers[Self::face_index(Self::U, 1)],
+            self.stickers[Self::face_index(Self::U, 2)],
+        ];
+        self.stickers[Self::face_index(Self::U, 0)] = self.stickers[Self::face_index(Self::L, 6)];
+        self.stickers[Self::face_index(Self::U, 1)] = self.stickers[Self::face_index(Self::L, 3)];
+        self.stickers[Self::face_index(Self::U, 2)] = self.stickers[Self::face_index(Self::L, 0)];
+        self.stickers[Self::face_index(Self::L, 6)] = self.stickers[Self::face_index(Self::D, 8)];
+        self.stickers[Self::face_index(Self::L, 3)] = self.stickers[Self::face_index(Self::D, 7)];
+        self.stickers[Self::face_index(Self::L, 0)] = self.stickers[Self::face_index(Self::D, 6)];
+        self.stickers[Self::face_index(Self::D, 8)] = self.stickers[Self::face_index(Self::R, 2)];
+        self.stickers[Self::face_index(Self::D, 7)] = self.stickers[Self::face_index(Self::R, 5)];
+        self.stickers[Self::face_index(Self::D, 6)] = self.stickers[Self::face_index(Self::R, 8)];
+        self.stickers[Self::face_index(Self::R, 2)] = temp[0];
+        self.stickers[Self::face_index(Self::R, 5)] = temp[1];
+        self.stickers[Self::face_index(Self::R, 8)] = temp[2];
+    }
+    /// Apply B2 move: rotate back face 180°
+    fn apply_b_double(&mut self) {
+        // Rotate B face stickers 180°
+        self.stickers.swap(27, 35);
+        self.stickers.swap(29, 33);
+        self.stickers.swap(28, 34);
+        self.stickers.swap(30, 32);
+        // Swap edges: U top row ↔ D bottom row (reversed), R right column ↔ L left column (reversed)
+        for i in 0..3 {
+            self.stickers.swap(
+                Self::face_index(Self::U, i),
+                Self::face_index(Self::D, 8 - i),
+            );
+            self.stickers.swap(
+                Self::face_index(Self::R, 2 + i * 3),
+                Self::face_index(Self::L, 6 - i * 3),
+            );
+        }
+    }
     /// Apply R move: rotate right face 90° clockwise
     /// Also cycles the right columns of U, F, D faces and left column of B (reversed)
-    fn apply_r_move(&mut self) {
+    fn apply_r(&mut self) {
         // Rotate R face stickers 90° clockwise
         let temp = self.stickers[36];
         self.stickers[36] = self.stickers[42];
         self.stickers[42] = self.stickers[44];
         self.stickers[44] = self.stickers[38];
         self.stickers[38] = temp;
-
         let temp = self.stickers[37];
         self.stickers[37] = self.stickers[39];
         self.stickers[39] = self.stickers[43];
@@ -420,38 +540,87 @@ impl OptimizedCube {
             self.stickers[Self::face_index(Self::U, 5)],
             self.stickers[Self::face_index(Self::U, 8)],
         ];
-
         // F right column → U right column
         self.stickers[Self::face_index(Self::U, 2)] = self.stickers[Self::face_index(Self::F, 2)];
         self.stickers[Self::face_index(Self::U, 5)] = self.stickers[Self::face_index(Self::F, 5)];
         self.stickers[Self::face_index(Self::U, 8)] = self.stickers[Self::face_index(Self::F, 8)];
-
         // D right column → F right column
         self.stickers[Self::face_index(Self::F, 2)] = self.stickers[Self::face_index(Self::D, 2)];
         self.stickers[Self::face_index(Self::F, 5)] = self.stickers[Self::face_index(Self::D, 5)];
         self.stickers[Self::face_index(Self::F, 8)] = self.stickers[Self::face_index(Self::D, 8)];
-
         // B left column (reversed) → D right column
         self.stickers[Self::face_index(Self::D, 2)] = self.stickers[Self::face_index(Self::B, 6)];
         self.stickers[Self::face_index(Self::D, 5)] = self.stickers[Self::face_index(Self::B, 3)];
         self.stickers[Self::face_index(Self::D, 8)] = self.stickers[Self::face_index(Self::B, 0)];
-
         // temp (old U right column) → B left column (reversed)
         self.stickers[Self::face_index(Self::B, 6)] = temp[0];
         self.stickers[Self::face_index(Self::B, 3)] = temp[1];
         self.stickers[Self::face_index(Self::B, 0)] = temp[2];
     }
-
+    /// Apply R' move: rotate right face 90° counter-clockwise
+    fn apply_r_prime(&mut self) {
+        // Rotate R face stickers 90° counter-clockwise
+        let temp = self.stickers[36];
+        self.stickers[36] = self.stickers[38];
+        self.stickers[38] = self.stickers[44];
+        self.stickers[44] = self.stickers[42];
+        self.stickers[42] = temp;
+        let temp = self.stickers[37];
+        self.stickers[37] = self.stickers[41];
+        self.stickers[41] = self.stickers[43];
+        self.stickers[43] = self.stickers[39];
+        self.stickers[39] = temp;
+        // Cycle right columns: U ← F ← D ← B (reversed) ← U
+        let temp = [
+            self.stickers[Self::face_index(Self::U, 2)],
+            self.stickers[Self::face_index(Self::U, 5)],
+            self.stickers[Self::face_index(Self::U, 8)],
+        ];
+        // B left column (reversed) → U right column
+        self.stickers[Self::face_index(Self::U, 2)] = self.stickers[Self::face_index(Self::B, 6)];
+        self.stickers[Self::face_index(Self::U, 5)] = self.stickers[Self::face_index(Self::B, 3)];
+        self.stickers[Self::face_index(Self::U, 8)] = self.stickers[Self::face_index(Self::B, 0)];
+        // D right column → B left column (reversed)
+        self.stickers[Self::face_index(Self::B, 6)] = self.stickers[Self::face_index(Self::D, 2)];
+        self.stickers[Self::face_index(Self::B, 3)] = self.stickers[Self::face_index(Self::D, 5)];
+        self.stickers[Self::face_index(Self::B, 0)] = self.stickers[Self::face_index(Self::D, 8)];
+        // F right column → D right column
+        self.stickers[Self::face_index(Self::D, 2)] = self.stickers[Self::face_index(Self::F, 2)];
+        self.stickers[Self::face_index(Self::D, 5)] = self.stickers[Self::face_index(Self::F, 5)];
+        self.stickers[Self::face_index(Self::D, 8)] = self.stickers[Self::face_index(Self::F, 8)];
+        // temp (old U right column) → F right column
+        self.stickers[Self::face_index(Self::F, 2)] = temp[0];
+        self.stickers[Self::face_index(Self::F, 5)] = temp[1];
+        self.stickers[Self::face_index(Self::F, 8)] = temp[2];
+    }
+    /// Apply R2 move: rotate right face 180°
+    fn apply_r_double(&mut self) {
+        // Rotate R face stickers 180°
+        self.stickers.swap(36, 44);
+        self.stickers.swap(38, 42);
+        self.stickers.swap(37, 43);
+        self.stickers.swap(39, 41);
+        // Swap edges: U right column ↔ D right column, F right column ↔ B left column (reversed)
+        for i in 0..3 {
+            self.stickers.swap(
+                Self::face_index(Self::U, 2 + i * 3),
+                Self::face_index(Self::D, 2 + i * 3),
+            );
+            self.stickers.swap(
+                Self::face_index(Self::F, 2 + i * 3),
+                Self::face_index(Self::B, 6 - i * 3),
+            );
+        }
+    }
     /// Apply L move: rotate left face 90° clockwise
     /// Also cycles the left columns of U, B (reversed), D, F faces
-    fn apply_l_move(&mut self) {
+    fn apply_l(&mut self) {
         // Rotate L face stickers 90° clockwise
         let temp = self.stickers[45];
         self.stickers[45] = self.stickers[51];
         self.stickers[51] = self.stickers[53];
         self.stickers[53] = self.stickers[47];
         self.stickers[47] = temp;
-
         let temp = self.stickers[46];
         self.stickers[46] = self.stickers[48];
         self.stickers[48] = self.stickers[52];
@@ -463,28 +632,78 @@ impl OptimizedCube {
             self.stickers[Self::face_index(Self::U, 3)],
             self.stickers[Self::face_index(Self::U, 6)],
         ];
-
         // B right column (reversed) → U left column
         self.stickers[Self::face_index(Self::U, 0)] = self.stickers[Self::face_index(Self::B, 8)];
         self.stickers[Self::face_index(Self::U, 3)] = self.stickers[Self::face_index(Self::B, 5)];
         self.stickers[Self::face_index(Self::U, 6)] = self.stickers[Self::face_index(Self::B, 2)];
-
         // D left column → B right column (reversed)
         self.stickers[Self::face_index(Self::B, 8)] = self.stickers[Self::face_index(Self::D, 0)];
         self.stickers[Self::face_index(Self::B, 5)] = self.stickers[Self::face_index(Self::D, 3)];
         self.stickers[Self::face_index(Self::B, 2)] = self.stickers[Self::face_index(Self::D, 6)];
-
         // F left column → D left column
         self.stickers[Self::face_index(Self::D, 0)] = self.stickers[Self::face_index(Self::F, 0)];
         self.stickers[Self::face_index(Self::D, 3)] = self.stickers[Self::face_index(Self::F, 3)];
         self.stickers[Self::face_index(Self::D, 6)] = self.stickers[Self::face_index(Self::F, 6)];
-
         // temp (old U left column) → F left column
         self.stickers[Self::face_index(Self::F, 0)] = temp[0];
         self.stickers[Self::face_index(Self::F, 3)] = temp[1];
         self.stickers[Self::face_index(Self::F, 6)] = temp[2];
     }
-
+    /// Apply L' move: rotate left face 90° counter-clockwise
+    fn apply_l_prime(&mut self) {
+        // Rotate L face stickers 90° counter-clockwise
+        let temp = self.stickers[45];
+        self.stickers[45] = self.stickers[47];
+        self.stickers[47] = self.stickers[53];
+        self.stickers[53] = self.stickers[51];
+        self.stickers[51] = temp;
+        let temp = self.stickers[46];
+        self.stickers[46] = self.stickers[50];
+        self.stickers[50] = self.stickers[52];
+        self.stickers[52] = self.stickers[48];
+        self.stickers[48] = temp;
+        // Cycle left columns: U ← B (reversed) ← D ← F ← U
+        let temp = [
+            self.stickers[Self::face_index(Self::U, 0)],
+            self.stickers[Self::face_index(Self::U, 3)],
+            self.stickers[Self::face_index(Self::U, 6)],
+        ];
+        // F left column → U left column
+        self.stickers[Self::face_index(Self::U, 0)] = self.stickers[Self::face_index(Self::F, 0)];
+        self.stickers[Self::face_index(Self::U, 3)] = self.stickers[Self::face_index(Self::F, 3)];
+        self.stickers[Self::face_index(Self::U, 6)] = self.stickers[Self::face_index(Self::F, 6)];
+        // D left column → F left column
+        self.stickers[Self::face_index(Self::F, 0)] = self.stickers[Self::face_index(Self::D, 0)];
+        self.stickers[Self::face_index(Self::F, 3)] = self.stickers[Self::face_index(Self::D, 3)];
+        self.stickers[Self::face_index(Self::F, 6)] = self.stickers[Self::face_index(Self::D, 6)];
+        // B right column (reversed) → D left column
+        self.stickers[Self::face_index(Self::D, 0)] = self.stickers[Self::face_index(Self::B, 8)];
+        self.stickers[Self::face_index(Self::D, 3)] = self.stickers[Self::face_index(Self::B, 5)];
+        self.stickers[Self::face_index(Self::D, 6)] = self.stickers[Self::face_index(Self::B, 2)];
+        // temp (old U left column) → B right column (reversed)
+        self.stickers[Self::face_index(Self::B, 8)] = temp[0];
+        self.stickers[Self::face_index(Self::B, 5)] = temp[1];
+        self.stickers[Self::face_index(Self::B, 2)] = temp[2];
+    }
+    /// Apply L2 move: rotate left face 180°
+    fn apply_l_double(&mut self) {
+        // Rotate L face stickers 180°
+        self.stickers.swap(45, 53);
+        self.stickers.swap(47, 51);
+        self.stickers.swap(46, 52);
+        self.stickers.swap(48, 50);
+        // Swap edges: U left column ↔ D left column, F left column ↔ B right column (reversed)
+        for i in 0..3 {
+            self.stickers.swap(
+                Self::face_index(Self::U, i * 3),
+                Self::face_index(Self::D, i * 3),
+            );
+            self.stickers.swap(
+                Self::face_index(Self::F, i * 3),
+                Self::face_index(Self::B, 8 - i * 3),
+            );
+        }
+    }
     /// Apply multiple moves from a byte array (efficient batch processing)
     pub fn apply_moves(&mut self, moves: &[u8]) {
         for &move_byte in moves {
@@ -493,14 +712,12 @@ impl OptimizedCube {
             }
         }
     }
-
     /// Apply a single move from string notation (e.g., "U", "R'", "F2")
     pub fn apply_move(&mut self, move_str: &str) -> Result<(), String> {
         let move_code = MoveCode::from_str(move_str)?;
         self.apply_move_code(move_code);
         Ok(())
     }
-
     /// Apply a scramble sequence from string (space-separated moves)
     pub fn apply_scramble(&mut self, scramble: &str) -> Result<(), String> {
         for move_str in scramble.split_whitespace() {
@@ -510,7 +727,6 @@ impl OptimizedCube {
         }
         Ok(())
     }
-
     /// Parse scramble string into byte array for efficient batch processing
     pub fn parse_scramble(scramble: &str) -> Result<Vec<u8>, String> {
         let mut moves = Vec::new();
@@ -522,7 +738,6 @@ impl OptimizedCube {
         }
         Ok(moves)
     }
-
     /// Get face axis for WCA validation (0=UD, 1=FB, 2=RL)
     fn get_face_axis(face: u8) -> u8 {
         match face {
@@ -532,7 +747,6 @@ impl OptimizedCube {
             _ => 255,   // Invalid
         }
     }
-
     /// Check if a move is valid according to WCA rules
     fn is_valid_move(
         move_code: u8,
@@ -543,17 +757,13 @@ impl OptimizedCube {
         if move_code > 17 {
             return false;
         }
-
         let current_face = move_code % 6;
-
         if let Some(prev_move) = previous_move {
             let previous_face = prev_move % 6;
-
             // Rule 1: Don't allow consecutive moves on the same face
             if current_face == previous_face {
                 return false;
             }
-
             // Rule 2: WCA axis rule - if last two moves were on the same axis,
             // don't allow a third consecutive move on that axis
             if let Some(before_prev_move) = before_previous_move {
@@ -561,24 +771,19 @@ impl OptimizedCube {
                 let current_axis = Self::get_face_axis(current_face);
                 let previous_axis = Self::get_face_axis(previous_face);
                 let before_previous_axis = Self::get_face_axis(before_previous_face);
-
                 if previous_axis == before_previous_axis && current_axis == previous_axis {
                     return false;
                 }
             }
         }
-
         true
     }
-
     /// Generate a random scramble of the specified length
     /// Follows WCA rules: no consecutive moves on same face, no 3 moves on same axis
     pub fn generate_random_scramble(length: usize) -> Vec<u8> {
         let mut moves = Vec::with_capacity(length);
-
         static mut SEED: u64 = 0;
         static mut INITIALIZED: bool = false;
-
         // Initialize seed with random value on first use
         unsafe {
             if !INITIALIZED {
@@ -603,15 +808,12 @@ impl OptimizedCube {
                 INITIALIZED = true;
             }
         }
-
         let mut attempts = 0;
         const MAX_ATTEMPTS: usize = 1000; // Prevent infinite loops
-
         while moves.len() < length && attempts < MAX_ATTEMPTS {
             unsafe {
                 SEED = SEED.wrapping_mul(1103515245).wrapping_add(12345);
                 let move_code = ((SEED >> 16) % 18) as u8;
-
                 let previous_move = if moves.len() > 0 {
                     Some(moves[moves.len() - 1])
                 } else {
@@ -622,48 +824,38 @@ impl OptimizedCube {
                 } else {
                     None
                 };
-
                 if Self::is_valid_move(move_code, previous_move, before_previous_move) {
                     moves.push(move_code);
                 }
             }
-
             attempts += 1;
         }
-
         moves
     }
-
     /// Validate a scramble sequence according to WCA rules
     pub fn validate_scramble(moves: &[u8]) -> bool {
         for i in 0..moves.len() {
             let current_move = moves[i];
             let previous_move = if i > 0 { Some(moves[i - 1]) } else { None };
             let before_previous_move = if i > 1 { Some(moves[i - 2]) } else { None };
-
             if !Self::is_valid_move(current_move, previous_move, before_previous_move) {
                 return false;
             }
         }
-
         true
     }
-
     /// Generate a competition-standard scramble (20 moves)
     pub fn generate_competition_scramble() -> Vec<u8> {
         Self::generate_random_scramble(20)
     }
-
     /// Generate a practice scramble (15 moves)
     pub fn generate_practice_scramble() -> Vec<u8> {
         Self::generate_random_scramble(15)
     }
-
     /// Generate a long scramble (25 moves)
     pub fn generate_long_scramble() -> Vec<u8> {
         Self::generate_random_scramble(25)
     }
-
     /// Convert move codes to string representation for display
     pub fn moves_to_string(moves: &[u8]) -> String {
         moves
@@ -692,13 +884,11 @@ impl OptimizedCube {
             .collect::<Vec<&str>>()
             .join(" ")
     }
-
     /// Check if the cube is in solved state
     pub fn is_solved(&self) -> bool {
         let solved = Self::solved();
         self.stickers == solved.stickers
     }
-
     /// Get a face as a slice of 9 stickers (0-8 indices)
     /// Returns empty slice for invalid face index
     pub fn get_face(&self, face: usize) -> &[u8] {
@@ -713,11 +903,9 @@ impl OptimizedCube {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
     fn test_cube_initialization() {
         let cube = OptimizedCube::new();
@@ -725,101 +913,81 @@ mod tests {
         assert_eq!(cube.stickers, solved.stickers);
         assert!(cube.is_solved());
     }
-
     #[test]
     fn test_solved_cube_structure() {
         let cube = OptimizedCube::solved();
-
         // Check U face (white)
         for i in 0..9 {
             assert_eq!(cube.stickers[i], OptimizedCube::WHITE);
         }
-
         // Check D face (yellow)
         for i in 9..18 {
             assert_eq!(cube.stickers[i], OptimizedCube::YELLOW);
         }
-
         // Check F face (green)
         for i in 18..27 {
             assert_eq!(cube.stickers[i], OptimizedCube::GREEN);
         }
-
         // Check B face (blue)
         for i in 27..36 {
             assert_eq!(cube.stickers[i], OptimizedCube::BLUE);
         }
-
         // Check R face (red)
         for i in 36..45 {
             assert_eq!(cube.stickers[i], OptimizedCube::RED);
         }
-
         // Check L face (orange)
         for i in 45..54 {
             assert_eq!(cube.stickers[i], OptimizedCube::ORANGE);
         }
     }
-
     #[test]
     fn test_move_parsing() {
         assert_eq!(MoveCode::from_str("U").unwrap(), MoveCode::U);
         assert_eq!(MoveCode::from_str("D'").unwrap(), MoveCode::Dp);
         assert_eq!(MoveCode::from_str("F2").unwrap(), MoveCode::F2);
         assert_eq!(MoveCode::from_str("R'").unwrap(), MoveCode::Rp);
-
         assert!(MoveCode::from_str("X").is_err());
         assert!(MoveCode::from_str("U3").is_err());
     }
-
     #[test]
     fn test_move_code_conversion() {
         for i in 0u8..18u8 {
             let move_code = MoveCode::from_u8(i).unwrap();
             assert_eq!(move_code as u8, i);
         }
-
         assert!(MoveCode::from_u8(18).is_err());
         assert!(MoveCode::from_u8(255).is_err());
     }
-
     #[test]
     fn test_basic_u_move() {
         let mut cube = OptimizedCube::solved();
         let original = cube.clone();
-
         // Apply U move
         cube.apply_move_code(MoveCode::U);
         assert!(!cube.is_solved());
-
         // Apply U' to reverse
         cube.apply_move_code(MoveCode::Up);
         assert_eq!(cube.stickers, original.stickers);
         assert!(cube.is_solved());
     }
-
     #[test]
     fn test_u_move_properties() {
         let mut cube = OptimizedCube::solved();
         let original = cube.clone();
-
         // U followed by U' should return to original
         cube.apply_move_code(MoveCode::U);
         cube.apply_move_code(MoveCode::Up);
         assert_eq!(cube.stickers, original.stickers);
-
         // Reset cube
         cube = OptimizedCube::solved();
-
         // Four U moves should return to original
         for _ in 0..4 {
             cube.apply_move_code(MoveCode::U);
         }
         assert_eq!(cube.stickers, original.stickers);
-
         // Reset cube
         cube = OptimizedCube::solved();
-
         // U2 should equal two U moves
         let mut cube2 = OptimizedCube::solved();
         cube.apply_move_code(MoveCode::U2);
@@ -827,7 +995,6 @@ mod tests {
         cube2.apply_move_code(MoveCode::U);
         assert_eq!(cube.stickers, cube2.stickers);
     }
-
     #[test]
     fn test_all_face_moves() {
         let moves = [
@@ -838,11 +1005,9 @@ mod tests {
             MoveCode::R,
             MoveCode::L,
         ];
-
         for move_code in moves {
             let mut cube = OptimizedCube::solved();
             let original = cube.clone();
-
             // Apply move four times should return to original
             for _ in 0..4 {
                 cube.apply_move_code(move_code);
@@ -854,7 +1019,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn test_prime_moves() {
         let move_pairs = [
@@ -865,11 +1029,9 @@ mod tests {
             (MoveCode::R, MoveCode::Rp),
             (MoveCode::L, MoveCode::Lp),
         ];
-
         for (normal, prime) in move_pairs {
             let mut cube = OptimizedCube::solved();
             let original = cube.clone();
-
             // Normal + prime should cancel out
             cube.apply_move_code(normal);
             cube.apply_move_code(prime);
@@ -878,7 +1040,6 @@ mod tests {
                 "Move pair {:?}/{:?} failed",
                 normal, prime
             );
-
             // Prime + normal should cancel out
             cube = OptimizedCube::solved();
             cube.apply_move_code(prime);
@@ -890,7 +1051,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn test_double_moves() {
         let move_pairs = [
@@ -901,11 +1061,9 @@ mod tests {
             (MoveCode::R, MoveCode::R2),
             (MoveCode::L, MoveCode::L2),
         ];
-
         for (normal, double) in move_pairs {
             let mut cube1 = OptimizedCube::solved();
             let mut cube2 = OptimizedCube::solved();
-
             // Double move should equal two normal moves
             cube1.apply_move_code(double);
             cube2.apply_move_code(normal);
@@ -915,7 +1073,6 @@ mod tests {
                 "Double move {:?} doesn't equal 2x{:?}",
                 double, normal
             );
-
             // Two double moves should return to original
             let original = OptimizedCube::solved();
             cube1.apply_move_code(double);
@@ -926,7 +1083,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn test_center_preservation() {
         let mut cube = OptimizedCube::solved();
@@ -939,14 +1095,12 @@ mod tests {
             cube.stickers[40], // R center
             cube.stickers[49], // L center
         ];
-
         // Apply various moves - but not all faces in sequence
         // because that would be like a full cube rotation
         let moves = [MoveCode::U, MoveCode::R, MoveCode::Up, MoveCode::Rp];
         for move_code in moves {
             cube.apply_move_code(move_code);
         }
-
         // Centers should remain unchanged
         for (i, &center_pos) in centers.iter().enumerate() {
             assert_eq!(
@@ -956,105 +1110,81 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn test_scramble_parsing() {
         let scramble = "R U R' U' R U R' F' R U R' U' R' F R";
         let moves = OptimizedCube::parse_scramble(scramble).unwrap();
-
         assert!(!moves.is_empty());
-
         // Apply parsed moves
         let mut cube = OptimizedCube::solved();
         cube.apply_moves(&moves);
         assert!(!cube.is_solved());
     }
-
     #[test]
     fn test_scramble_application() {
         let mut cube = OptimizedCube::solved();
         let scramble = "R U R' U'";
-
         cube.apply_scramble(scramble).unwrap();
         assert!(!cube.is_solved());
-
         // Apply inverse to solve
         let inverse = "U R U' R'";
         cube.apply_scramble(inverse).unwrap();
         assert!(cube.is_solved());
     }
-
     #[test]
     fn test_batch_vs_individual_moves() {
         let scramble = "R U R' U' R U R' F' R U R' U' R' F R";
         let moves = OptimizedCube::parse_scramble(scramble).unwrap();
-
         let mut cube1 = OptimizedCube::solved();
         let mut cube2 = OptimizedCube::solved();
-
         // Apply as batch
         cube1.apply_moves(&moves);
-
         // Apply individually
         cube2.apply_scramble(scramble).unwrap();
-
         assert_eq!(cube1.stickers, cube2.stickers);
     }
-
     #[test]
     fn test_get_face() {
         let cube = OptimizedCube::solved();
-
         assert_eq!(cube.get_face(0), &[0; 9]); // U face - all white
         assert_eq!(cube.get_face(1), &[1; 9]); // D face - all yellow
         assert_eq!(cube.get_face(2), &[2; 9]); // F face - all green
         assert_eq!(cube.get_face(3), &[3; 9]); // B face - all blue
         assert_eq!(cube.get_face(4), &[4; 9]); // R face - all red
         assert_eq!(cube.get_face(5), &[5; 9]); // L face - all orange
-
         assert_eq!(cube.get_face(6), &[]); // Invalid face
     }
-
     #[test]
     fn test_sticker_access() {
         let cube = OptimizedCube::solved();
-
         // Test zero-copy access
         let ptr = cube.ptr();
         assert!(!ptr.is_null());
-
         // Test stickers array access
         let stickers = cube.stickers();
         assert_eq!(stickers.len(), 54);
-
         // Test mutable access
         let mut cube = OptimizedCube::solved();
         let stickers_mut = cube.stickers_mut();
         stickers_mut[0] = 5;
         assert_eq!(cube.stickers[0], 5);
     }
-
     #[test]
     fn test_random_scramble_generation() {
         let scramble1 = OptimizedCube::generate_random_scramble(25);
         let scramble2 = OptimizedCube::generate_random_scramble(25);
-
         assert_eq!(scramble1.len(), 25);
         assert_eq!(scramble2.len(), 25);
-
         // Should be different (very high probability)
         assert_ne!(scramble1, scramble2);
-
         // All moves should be valid
         for &move_code in &scramble1 {
             assert!(MoveCode::from_u8(move_code).is_ok());
         }
     }
-
     #[test]
     fn test_complex_move_sequence() {
         let mut cube = OptimizedCube::solved();
-
         // Apply R U R' U' (simple 4-move sequence)
         let sequence = "R U R' U'";
         cube.apply_scramble(sequence).unwrap();
@@ -1062,7 +1192,6 @@ mod tests {
             !cube.is_solved(),
             "After R U R' U', cube should not be solved"
         );
-
         // Apply the inverse: U R U' R'
         let inverse = "U R U' R'";
         cube.apply_scramble(inverse).unwrap();
@@ -1071,11 +1200,9 @@ mod tests {
             "After applying inverse sequence, cube should be solved"
         );
     }
-
     #[test]
     fn test_face_rotation_correctness() {
         let mut cube = OptimizedCube::solved();
-
         // Test U move specifically - check that corners rotate correctly
         let before_corners = [
             cube.stickers[0],
@@ -1083,45 +1210,37 @@ mod tests {
             cube.stickers[8],
             cube.stickers[6], // U face corners
         ];
-
         cube.apply_move_code(MoveCode::U);
-
         let after_corners = [
             cube.stickers[0],
             cube.stickers[2],
             cube.stickers[8],
             cube.stickers[6],
         ];
-
         // After U move, corners should have rotated clockwise
         assert_eq!(after_corners[0], before_corners[3]); // 0 <- 6
         assert_eq!(after_corners[1], before_corners[0]); // 2 <- 0
         assert_eq!(after_corners[2], before_corners[1]); // 8 <- 2
         assert_eq!(after_corners[3], before_corners[2]); // 6 <- 8
     }
-
     #[test]
     fn test_stress_random_scrambles() {
         for _ in 0..100 {
             let scramble = OptimizedCube::generate_random_scramble(50);
             let mut cube = OptimizedCube::solved();
             cube.apply_moves(&scramble);
-
             // Cube should not crash and should be in a valid state
             // (We can't easily test for correctness without a reference implementation)
             assert_eq!(cube.stickers().len(), 54);
         }
     }
-
     #[test]
     fn test_r_move_cancellation() {
         let mut cube = OptimizedCube::solved();
         let original = cube.clone();
-
         // Apply R move
         cube.apply_move_code(MoveCode::R);
         assert!(!cube.is_solved(), "After R move, cube should not be solved");
-
         // Apply R' move
         cube.apply_move_code(MoveCode::Rp);
         assert_eq!(
@@ -1129,7 +1248,6 @@ mod tests {
             "R followed by R' should return to original state"
         );
         assert!(cube.is_solved(), "After R + R', cube should be solved");
-
         // Test with string interface
         cube = OptimizedCube::solved();
         cube.apply_move("R").unwrap();
@@ -1139,7 +1257,6 @@ mod tests {
             "String interface: R + R' should return to solved"
         );
     }
-
     #[test]
     fn test_all_move_cancellations() {
         let move_pairs = [
@@ -1150,11 +1267,9 @@ mod tests {
             (MoveCode::R, MoveCode::Rp),
             (MoveCode::L, MoveCode::Lp),
         ];
-
         for (normal, prime) in move_pairs {
             let mut cube = OptimizedCube::solved();
             let original = cube.clone();
-
             // Normal + prime should cancel
             cube.apply_move_code(normal);
             cube.apply_move_code(prime);
@@ -1165,12 +1280,10 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn test_move_correctness() {
         // Test each move with detailed expected vs actual behavior
         println!("\n=== COMPREHENSIVE MOVE TESTS ===");
-
         test_u_move_detailed();
         test_d_move_detailed();
         test_f_move_detailed();
@@ -1184,7 +1297,7 @@ mod tests {
         println!("\n--- U MOVE TEST ---");
 
         // Apply U move
-        cube.apply_u_move();
+        cube.apply_u();
 
         // Check U face rotation (should rotate clockwise)
         let u_face = cube.get_face(0);
@@ -1241,7 +1354,7 @@ mod tests {
         let mut cube = OptimizedCube::solved();
         println!("\n--- D MOVE TEST ---");
 
-        cube.apply_d_move();
+        cube.apply_d();
 
         // Check D face rotation
         let d_face = cube.get_face(1);
@@ -1278,7 +1391,7 @@ mod tests {
         let mut cube = OptimizedCube::solved();
         println!("\n--- F MOVE TEST ---");
 
-        cube.apply_f_move();
+        cube.apply_f();
 
         // Check F face rotation
         let f_face = cube.get_face(2);
@@ -1314,7 +1427,7 @@ mod tests {
         let mut cube = OptimizedCube::solved();
         println!("\n--- B MOVE TEST ---");
 
-        cube.apply_b_move();
+        cube.apply_b();
 
         let u_face = cube.get_face(0);
         let l_face = cube.get_face(5);
@@ -1345,7 +1458,7 @@ mod tests {
         let mut cube = OptimizedCube::solved();
         println!("\n--- R MOVE TEST ---");
 
-        cube.apply_r_move();
+        cube.apply_r();
 
         // Check R face rotation
         let r_face = cube.get_face(4);
@@ -1383,7 +1496,7 @@ mod tests {
         let mut cube = OptimizedCube::solved();
         println!("\n--- L MOVE TEST ---");
 
-        cube.apply_l_move();
+        cube.apply_l();
 
         let u_face = cube.get_face(0);
         let b_face = cube.get_face(3);
@@ -1510,7 +1623,7 @@ mod tests {
         println!("B top edge: {:?}", b_initial);
         println!("L top edge: {:?}", l_initial);
 
-        cube.apply_u_move();
+        cube.apply_u();
 
         let f_after = [cube.stickers[18], cube.stickers[19], cube.stickers[20]];
         let r_after = [cube.stickers[36], cube.stickers[37], cube.stickers[38]];
@@ -1559,7 +1672,7 @@ mod tests {
         println!("D right edge: {:?}", d_initial);
         println!("B left edge: {:?}", b_initial);
 
-        cube.apply_r_move();
+        cube.apply_r();
 
         let u_after = [cube.stickers[2], cube.stickers[5], cube.stickers[8]];
         let f_after = [cube.stickers[20], cube.stickers[23], cube.stickers[26]];
@@ -1612,7 +1725,7 @@ mod tests {
         println!("D top edge: {:?}", d_initial);
         println!("L right edge: {:?}", l_initial);
 
-        cube.apply_f_move();
+        cube.apply_f();
 
         let u_after = [cube.stickers[6], cube.stickers[7], cube.stickers[8]];
         let r_after = [cube.stickers[36], cube.stickers[39], cube.stickers[42]];
@@ -1694,7 +1807,7 @@ mod tests {
             cube.stickers[42], cube.stickers[43], cube.stickers[44]
         );
 
-        cube.apply_r_move();
+        cube.apply_r();
 
         println!("R face after R move:");
         println!(
@@ -1766,7 +1879,7 @@ mod tests {
             cube.stickers[33], cube.stickers[34], cube.stickers[35]
         );
 
-        cube.apply_b_move();
+        cube.apply_b();
 
         println!("B face after B move:");
         println!(
@@ -1836,7 +1949,7 @@ mod tests {
             cube.stickers[42], cube.stickers[43], cube.stickers[44]
         );
 
-        cube.apply_d_move();
+        cube.apply_d();
 
         println!("After D move:");
         println!(
@@ -1915,7 +2028,7 @@ mod tests {
             cube.stickers[27], cube.stickers[30], cube.stickers[33]
         );
 
-        cube.apply_r_move();
+        cube.apply_r();
 
         println!("After R move:");
         println!(
@@ -2029,12 +2142,12 @@ mod tests {
         println!("\n--- ALL FACES CLOCKWISE ROTATION TEST ---");
 
         let faces = [
-            (0, "U", "apply_u_move"),
-            (9, "D", "apply_d_move"),
-            (18, "F", "apply_f_move"),
-            (27, "B", "apply_b_move"),
-            (36, "R", "apply_r_move"),
-            (45, "L", "apply_l_move"),
+            (0, "U", "apply_u"),
+            (9, "D", "apply_d"),
+            (18, "F", "apply_f"),
+            (27, "B", "apply_b"),
+            (36, "R", "apply_r"),
+            (45, "L", "apply_l"),
         ];
 
         for (face_start, face_name, _) in faces.iter() {
@@ -2052,12 +2165,12 @@ mod tests {
 
             // Apply the move
             match face_name {
-                &"U" => cube.apply_u_move(),
-                &"D" => cube.apply_d_move(),
-                &"F" => cube.apply_f_move(),
-                &"B" => cube.apply_b_move(),
-                &"R" => cube.apply_r_move(),
-                &"L" => cube.apply_l_move(),
+                &"U" => cube.apply_u(),
+                &"D" => cube.apply_d(),
+                &"F" => cube.apply_f(),
+                &"B" => cube.apply_b(),
+                &"R" => cube.apply_r(),
+                &"L" => cube.apply_l(),
                 _ => {}
             }
 
@@ -2106,34 +2219,34 @@ mod tests {
             // Apply prime move (3 regular moves = 1 counterclockwise)
             match face_name {
                 &"U" => {
-                    cube.apply_u_move();
-                    cube.apply_u_move();
-                    cube.apply_u_move();
+                    cube.apply_u();
+                    cube.apply_u();
+                    cube.apply_u();
                 }
                 &"D" => {
-                    cube.apply_d_move();
-                    cube.apply_d_move();
-                    cube.apply_d_move();
+                    cube.apply_d();
+                    cube.apply_d();
+                    cube.apply_d();
                 }
                 &"F" => {
-                    cube.apply_f_move();
-                    cube.apply_f_move();
-                    cube.apply_f_move();
+                    cube.apply_f();
+                    cube.apply_f();
+                    cube.apply_f();
                 }
                 &"B" => {
-                    cube.apply_b_move();
-                    cube.apply_b_move();
-                    cube.apply_b_move();
+                    cube.apply_b();
+                    cube.apply_b();
+                    cube.apply_b();
                 }
                 &"R" => {
-                    cube.apply_r_move();
-                    cube.apply_r_move();
-                    cube.apply_r_move();
+                    cube.apply_r();
+                    cube.apply_r();
+                    cube.apply_r();
                 }
                 &"L" => {
-                    cube.apply_l_move();
-                    cube.apply_l_move();
-                    cube.apply_l_move();
+                    cube.apply_l();
+                    cube.apply_l();
+                    cube.apply_l();
                 }
                 _ => {}
             }
@@ -2204,28 +2317,28 @@ mod tests {
             // Apply double move (2 regular moves)
             match face_name {
                 &"U" => {
-                    cube.apply_u_move();
-                    cube.apply_u_move();
+                    cube.apply_u();
+                    cube.apply_u();
                 }
                 &"D" => {
-                    cube.apply_d_move();
-                    cube.apply_d_move();
+                    cube.apply_d();
+                    cube.apply_d();
                 }
                 &"F" => {
-                    cube.apply_f_move();
-                    cube.apply_f_move();
+                    cube.apply_f();
+                    cube.apply_f();
                 }
                 &"B" => {
-                    cube.apply_b_move();
-                    cube.apply_b_move();
+                    cube.apply_b();
+                    cube.apply_b();
                 }
                 &"R" => {
-                    cube.apply_r_move();
-                    cube.apply_r_move();
+                    cube.apply_r();
+                    cube.apply_r();
                 }
                 &"L" => {
-                    cube.apply_l_move();
-                    cube.apply_l_move();
+                    cube.apply_l();
+                    cube.apply_l();
                 }
                 _ => {}
             }
@@ -2291,7 +2404,7 @@ mod tests {
         cube.stickers[46] = 131;
         cube.stickers[47] = 132; // L top
 
-        cube.apply_u_move();
+        cube.apply_u();
 
         let f_correct =
             [cube.stickers[18], cube.stickers[19], cube.stickers[20]] == [110, 111, 112];
@@ -2334,7 +2447,7 @@ mod tests {
         cube.stickers[43] = 131;
         cube.stickers[44] = 132; // R bottom
 
-        cube.apply_d_move();
+        cube.apply_d();
 
         let f_gets_l = [cube.stickers[24], cube.stickers[25], cube.stickers[26]] == [110, 111, 112];
         let l_gets_b = [cube.stickers[51], cube.stickers[52], cube.stickers[53]] == [120, 121, 122];
@@ -2372,7 +2485,7 @@ mod tests {
         cube.stickers[50] = 131;
         cube.stickers[53] = 132; // L right
 
-        cube.apply_f_move();
+        cube.apply_f();
 
         let u_gets_l = [cube.stickers[6], cube.stickers[7], cube.stickers[8]] == [130, 131, 132];
         let r_gets_u = [cube.stickers[36], cube.stickers[39], cube.stickers[42]] == [100, 101, 102];
@@ -2410,7 +2523,7 @@ mod tests {
         cube.stickers[41] = 131;
         cube.stickers[44] = 132; // R right
 
-        cube.apply_b_move();
+        cube.apply_b();
 
         let u_gets_r = [cube.stickers[0], cube.stickers[1], cube.stickers[2]] == [130, 131, 132];
         let l_gets_u = [cube.stickers[45], cube.stickers[48], cube.stickers[51]] == [100, 101, 102];
@@ -2448,7 +2561,7 @@ mod tests {
         cube.stickers[30] = 131;
         cube.stickers[33] = 132; // B left
 
-        cube.apply_r_move();
+        cube.apply_r();
 
         let u_gets_f = [cube.stickers[2], cube.stickers[5], cube.stickers[8]] == [110, 111, 112];
         let f_gets_d = [cube.stickers[20], cube.stickers[23], cube.stickers[26]] == [120, 121, 122];
@@ -2497,7 +2610,7 @@ mod tests {
         cube.stickers[21] = 131;
         cube.stickers[24] = 132; // F left
 
-        cube.apply_l_move();
+        cube.apply_l();
 
         let u_gets_b = [cube.stickers[0], cube.stickers[3], cube.stickers[6]] == [110, 111, 112];
         let b_gets_d = [cube.stickers[29], cube.stickers[32], cube.stickers[35]] == [120, 121, 122];
@@ -2583,7 +2696,7 @@ mod tests {
             cube.stickers[42], cube.stickers[43], cube.stickers[44]
         );
 
-        cube.apply_d_move();
+        cube.apply_d();
 
         println!("After D move:");
         println!(
@@ -2652,7 +2765,7 @@ mod tests {
             cube.stickers[18], cube.stickers[21], cube.stickers[24]
         );
 
-        cube.apply_l_move();
+        cube.apply_l();
 
         println!("After L move:");
         println!(
@@ -2717,7 +2830,7 @@ mod tests {
             cube.stickers[47], cube.stickers[50], cube.stickers[53]
         );
 
-        cube.apply_f_move();
+        cube.apply_f();
 
         println!("After F move:");
         println!(
@@ -2782,7 +2895,7 @@ mod tests {
             cube.stickers[38], cube.stickers[41], cube.stickers[44]
         );
 
-        cube.apply_b_move();
+        cube.apply_b();
 
         println!("After B move:");
         println!(
